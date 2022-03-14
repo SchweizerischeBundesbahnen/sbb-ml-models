@@ -111,20 +111,24 @@ Use:
 ```bash
 python inference-python/detect.py --model PATH_TO_CONVERTED_MODEL \
 --img-dir PATH_TO_IMG_DIR \
+--max-img MAX_IMG \
 --out OUT_PATH \
 --iou_threshold IOU_THRESHOLD \
---conf-threshold CONF_THRESHOLD
+--conf-threshold CONF_THRESHOLD \
+--no-save
 ```
-
+The path to the model (PyTorch, CoreML or TFLite) must be specified with `--model`. The path to the directory containing the images to test the model on with is specified `--img-dir`. If the repository contains many images and one wants to only test on a few, the maximum number of images to use can be given with `--max-img`. By default, the detections are saved in `output/data/detections`, that path can be changed with `--out`. The IoU and confidence thresholds can be given with `--iou-threshold` and `--conf-threshold`, respectively. Additonally, if one doesn't want to save the detections, one can use the flag `--no-save`.
 # Test
 Once converted, the model can be tested.
 
 Use:
 ```bash
 python inference-python/test_model.py --model PATH_TO_CONVERTED_MODEL \
---pt-model PATH_TO_PT_MODEL \
---data PATH_TO_IMG_DIR \
---save-imgs
+--reference-model PATH_TO_REFERENCE_MODEL \
+--img-dir PATH_TO_IMG_DIR \
+--verbose
 ```
+In order to test a model, one needs a reference model. The detections made by the compared model are then compared to those of the reference model, typically one uses the PyTorch model as reference. The path to the compared model is given with `--model`, and the path to the reference model with `--reference-model`. Any model (PyTorch, CoreML, TFLite) can be used, but both models must consider the same classes. The models are compared on a set of images given by `--img-dir`. The flag `--verbose` can be used if one wants the details of each predictions. The test passes if the mAP score is above 0.6 and fails otherwise.
+
 ## Authors
 * **Jeanne Fleury**
