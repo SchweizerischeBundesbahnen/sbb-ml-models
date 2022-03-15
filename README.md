@@ -3,6 +3,8 @@
 ## Introduction
 This repository contains trained YoloV5 models, as well as all tools necessary in order to have YoloV5 run on mobile.
 
+[![Model recognizes SBB objects and trains](images/demo.gif)](http://www.youtube.com/watch?v=1xE47hNwsBQ "SBB ML Universal Model Demo")
+
 <!---
 What's the purpose of this repository ?
 -->
