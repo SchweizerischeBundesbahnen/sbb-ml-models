@@ -1,0 +1,151 @@
+# Annotations
+
+The universal model recognizes the following SBB objects and states:
+
+| Sample | Annotation                                  |
+| :----- | :------------------------------------------ |
+| -      | Abfahrtsmonitor                             |
+| -      | Abfallbehälter-Abteil                       |
+| -      | Abfallbehälter-Abteil_fehlt                 |
+| -      | Abfallbehälter-Bahnhof                      |
+| -      | Abfallbehälter-Vorraum                      |
+| -      | Abfallbehälter_Graffiti                     |
+| -      | Abfalleimer-Bahnhof                         |
+| -      | Abfalleimer-Bahnhof_Graffiti                |
+| -      | Abteil-Übergangstüre                        |
+| -      | Abteilwand_Graffiti                         |
+| -      | Analoge-Schliessfächer                      |
+| -      | Analoge-Schliessfächer_Verkratzt            |
+| -      | Anderes-Piktogramm-Bahnhof                  |
+| -      | Ankunftsmonitor                             |
+| -      | Armlehne                                    |
+| -      | Auto                                        |
+| -      | Automatennummer                             |
+| -      | Bedien-und-Anzeigeelemente                  |
+| -      | Beleuchtung im Fst.                         |
+| -      | Beleuchtung-Bahnhof_AUS-defekt              |
+| -      | Beleuchtung-Bahnhof_EIN                     |
+| -      | Beleuchtung-Wagen_AUS-defekt                |
+| -      | Beleuchtung-Wagen_EIN                       |
+| -      | Betriebslagemonitor                         |
+| -      | Billettautomat-SBB                          |
+| -      | Billettautomat-SBB_Bildschirm-eingeschlagen |
+| -      | Billettautomat-SBB_Graffiti                 |
+| -      | Billettentwerter-SBB                        |
+| -      | Billettentwerter_Graffiti                   |
+| -      | Blaue-FIS-Tafel                             |
+| -      | Busnummer                                   |
+| -      | CAB-Radio und Funkgerät                     |
+| -      | Dienstbeleuchtung-Schienenfz                |
+| -      | Digitale-Schliessfächer                     |
+| -      | DMI_Bedien_Diagnosebildschirm               |
+| -      | Einstiegsbereich-Wand_Graffiti              |
+| -      | Einstiegstüre                               |
+| -      | Einstiegstüre_offen                         |
+| -      | ETCS                                        |
+| -      | Fenster-innen-Wagen                         |
+| -      | Fenster-innen-Wagen_Graffiti                |
+| -      | Feuerlöscher                                |
+| -      | FIS_Graffiti                                |
+| -      | Fluchthaube                                 |
+| -      | Formulare                                   |
+| -      | Fussboden-Bahnhof_beschädigt                |
+| -      | Fussboden-Bahnhof_verschmutzt               |
+| -      | Fussboden-Wagen_Verschmutzt                 |
+| -      | Fusspodest-Pedal                            |
+| -      | Füllstandsanz-Bioreaktor-Fäkalientank       |
+| -      | Füllstandsanz-Wasser                        |
+| -      | Gebäudetüre                                 |
+| -      | Gebäudetüre_Graffiti                        |
+| -      | Geldeinwurf                                 |
+| -      | Generalanzeiger                             |
+| -      | Gleis-Piktogramm-Tafel                      |
+| -      | Handlauf-Bahnhof                            |
+| -      | Inventar Fzg.                               |
+| -      | Kamera-Wagen                                |
+| -      | KIS oder TIMS                               |
+| -      | KIS-Anzeige-aussen                          |
+| -      | KIS-Anzeige-innen                           |
+| -      | Klima und Heizung                           |
+| -      | Kupplung                                    |
+| -      | Lautsprecher Fst.                           |
+| -      | Lautsprecher-Bahnhof                        |
+| -      | LEA-Halter und USB                          |
+| -      | Lift                                        |
+| -      | Monitor-Wagen                               |
+| -      | Motorrad                                    |
+| -      | Nothammer                                   |
+| -      | Nothammer_fehlt                             |
+| -      | Pantograf                                   |
+| -      | Parkautomat                                 |
+| -      | Perronanzeiger                              |
+| -      | Perronsäule_Graffiti                        |
+| -      | Person                                      |
+| -      | Pflanzenwuchs                               |
+| -      | Puffer-Stossvorrichtung                     |
+| -      | Quittierschalter                            |
+| -      | Re 460                                      |
+| -      | Recyclingstation                            |
+| -      | Rolltreppe                                  |
+| -      | Rollvorhang                                 |
+| -      | Rückspiegel-und-Rücksehsysteme              |
+| -      | Sander                                      |
+| -      | SBB-Uhr                                     |
+| -      | Scheibenwisch-und-Waschanlage               |
+| -      | Schienenfz                                  |
+| -      | Schienenfz_Graffiti                         |
+| -      | Schienenfz_Verschmutzung                    |
+| -      | Schlauch-Kupplung                           |
+| -      | Schnee                                      |
+| -      | Seitenfenster Fst.                          |
+| -      | Sektor-Piktogramm-Tafel                     |
+| -      | Selecta-Kaffeeautomat                       |
+| -      | Selectaautomat                              |
+| -      | Selectaautomat_eingeschlagen                |
+| -      | Sitz Lokführer                              |
+| -      | Sitz-Wagen                                  |
+| -      | Sitz-Wagen_Kopfschutztuch-fehlt             |
+| -      | Sitz-Wagen_Polster-aufgerissen              |
+| -      | Sitz-Wagen_Polster-fehlt                    |
+| -      | Sitz-Wagen_Polster-verschmutzt              |
+| -      | Sitzbank-Bahnhof                            |
+| -      | Sitzbank-Bahnhof_Graffiti                   |
+| -      | Sitzbank-Bahnhof_Verschmutzt                |
+| -      | Sitzverstellung-Wagen                       |
+| -      | Sonnenschutz-Führerstand                    |
+| -      | Sonstige-Wagen-Graffitis                    |
+| -      | Sprechstelle-Zugpersonal                    |
+| -      | Steckdose-Wagen                             |
+| -      | Sticker                                     |
+| -      | Text-auf-FIS-Tafel                          |
+| -      | Tisch-Wagen                                 |
+| -      | Tisch-Wagen_Graffiti                        |
+| -      | Tisch-Wagen_Verschmutzt                     |
+| -      | Tor                                         |
+| -      | Treppe-Bahnhof                              |
+| -      | Treppe-Bahnhof_Verschmutzt                  |
+| -      | Türe-Führerstand                            |
+| -      | Türgriff_Einstieg                           |
+| -      | Türknopf_Einstieg_schliessen                |
+| -      | Türknopf_Einstieg_öffnen                    |
+| -      | UIC-Nummer                                  |
+| -      | Umgebung_Graffiti                           |
+| -      | Unter-Überführung-Rampe_Graffiti            |
+| -      | Velo                                        |
+| -      | Wartesaal-Türe                              |
+| -      | WC-Bahnhof_Graffiti                         |
+| -      | WC-Kabine-Abfallbehälter                    |
+| -      | WC-Kabine-Defekt-Kleber                     |
+| -      | WC-Kabine-Oberfläche-Waschbereich-verkratzt |
+| -      | WC-Kabine-Seifenspender                     |
+| -      | WC-Kabine-Spiegel_Graffiti                  |
+| -      | WC-Kabine-Toilette                          |
+| -      | WC-Kabine-Türe                              |
+| -      | WC-Kabine-Türklinke-Griff                   |
+| -      | WC-Kabine-Türknopf                          |
+| -      | WC-Kabine-Wand_Graffiti                     |
+| -      | WC-Kabine-Waschbecken                       |
+| -      | WC-Kabine-Wasserhahn                        |
+| -      | WC-                                         |
+| -      | Türe-Bahnhof                                |
+| -      | ZUB                                         |

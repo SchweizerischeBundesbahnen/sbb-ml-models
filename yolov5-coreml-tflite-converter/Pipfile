@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[[source]]
+url = "https://test.pypi.org/simple/"
+verify_ssl = true
+name = "testpypi"
+
+[packages]
+numpy = "*"
+tflite-support-nightly = "*"
+coremltools = "*"
+onnx = "*"
+onnxmltools = "*"
+onnxruntime = "*"
+yolov5 = {editable = true, path = "./yolov5"}
+tflite = {editable = true, path = "./tflite"}
+utils = {editable = true, path = "./utils"}
+torch = "*"
+torchvision = "*"
+pytest = "*"
+tensorrt = "*"
+tensorflow = {path = "/Users/jeannefleury/Documents/Utils/tensorflow-2.4.1-py3-none-any.whl"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
