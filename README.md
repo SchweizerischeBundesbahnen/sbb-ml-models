@@ -14,7 +14,7 @@ We have several models which consider different datasets, i.e. recognize differe
 - **Traktion**: this model is more specific, it handles all objects which have to do with locomotives
 - **Universal** (all of the above)
 
-The description of each label can be found [here](TAGS.md).
+The description of each label can be found [here](Annotations.md).
 
 <!---
 ## Demo
