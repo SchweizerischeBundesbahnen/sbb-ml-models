@@ -1,4 +1,5 @@
 # SBB ML Models
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://spdx.org/licenses/MIT.html)
 
 ## Introduction
 This repository contains trained YoloV5 models, as well as all tools necessary in order to have YoloV5 run on mobile.
@@ -36,3 +37,10 @@ All information required to convert a dataset can be found [here](coco2yolov5-co
 
 The [official yolov5 repository](https://github.com/ultralytics/yolov5) contains the script to train a YoloV5 model.
 
+## Authors
+* **Jeanne Fleury**
+* **Stefan Aebischer**
+* **Henrik Karppinen**
+
+## License
+Code released under the [MIT](LICENSE).
