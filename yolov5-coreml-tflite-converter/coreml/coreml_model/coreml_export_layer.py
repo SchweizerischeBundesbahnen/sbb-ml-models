@@ -2,7 +2,7 @@ import logging
 
 import torch
 
-from constants import XY_SLICE, WH_SLICE, SCORE_SLICE, CLASSES_SLICE, BLUE, END_COLOR
+from helpers.constants import XY_SLICE, WH_SLICE, SCORE_SLICE, CLASSES_SLICE, BLUE, END_COLOR
 
 
 class CoreMLExportLayerGenerator:

@@ -2,7 +2,7 @@ import logging
 
 import torch
 
-from constants import BLUE, END_COLOR, GREEN, RED
+from helpers.constants import BLUE, END_COLOR, GREEN, RED
 
 
 class TorchscriptExporter:

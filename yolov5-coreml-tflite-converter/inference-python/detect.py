@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from utils.datasets import LoadImages
 
-from constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DEFAULT_DETECTED_IMAGE_DIR, \
+from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DEFAULT_DETECTED_IMAGE_DIR, \
     DEFAULT_INPUT_RESOLUTION, RED, BLUE, END_COLOR, NORMALIZATION_FACTOR
 from python_model.coreml_model import CoreMLModel
 from python_model.pytorch_model import PyTorchModel

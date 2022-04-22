@@ -8,7 +8,7 @@ In order for the dependency install to work, you need to:
 - add a `setup.py` file in that directory. The minimal content for that file can be taken from `yolov5.setup.py`
 - replace the two files `yolov5/models/yolo.py` and `yolov5/models/tf.py` by `yolov5.yolo.py` and `yolov5.tf.py`, renamed to `yolo.py` and `tf.py`, respectively
 
-After this is done, install the dependencies with pipenv: `pipenv install`.
+After this is done, install the dependencies with pip: `pip install -r requirements.txt`.
 
 
 ## YOLOv5 (PyTorch) to CoreML format conversion

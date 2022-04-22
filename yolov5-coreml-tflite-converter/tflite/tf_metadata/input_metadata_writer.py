@@ -1,6 +1,6 @@
 from tflite_support import metadata_schema_py_generated as _metadata_fb
 
-from constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX
+from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX
 from tf_metadata.metadata_utils import MetadataHelper
 
 

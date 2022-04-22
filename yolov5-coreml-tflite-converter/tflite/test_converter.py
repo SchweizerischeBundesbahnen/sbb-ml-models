@@ -3,7 +3,7 @@ import unittest
 
 import tensorflow as tf
 
-from constants import DEFAULT_PT_MODEL, OUTPUT_DIR, FLOAT32, FULLINT8, INT8, FLOAT16
+from helpers.constants import DEFAULT_PT_MODEL, OUTPUT_DIR, FLOAT32, FULLINT8, INT8, FLOAT16
 from tf_converter.pytorch_to_tf_converter import PytorchToTFConverter
 from tf_utils.parameters import ModelParameters, ConversionParameters
 
