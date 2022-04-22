@@ -1,6 +1,6 @@
 import unittest
 
-from constants import IMAGE_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, IOU_NAME, CONF_NAME, PREDICTIONS_NAME, \
+from helpers.constants import IMAGE_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, IOU_NAME, CONF_NAME, PREDICTIONS_NAME, \
     BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, FLOAT32, FLOAT16, INT8, FULLINT8
 from tf_metadata.metadata_writer import MetadataWriter
 from tf_utils.parameters import ModelParameters

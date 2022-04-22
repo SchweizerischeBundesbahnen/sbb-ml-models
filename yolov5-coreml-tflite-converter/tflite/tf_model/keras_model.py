@@ -4,7 +4,7 @@ import tensorflow as tf
 from models.tf import TFDetect
 from tensorflow import keras
 
-from constants import BATCH_SIZE, NB_CHANNEL, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, GREEN, BLUE, END_COLOR, RED
+from helpers.constants import BATCH_SIZE, NB_CHANNEL, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, GREEN, BLUE, END_COLOR, RED
 from tf_model.tf_model import tf_Model
 from tf_utils.parameters import ModelParameters, PostprocessingParameters
 import logging

@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 import torch
 
-from constants import RED, END_COLOR, BLUE, DEFAULT_DETECTED_IMAGE_DIR, PURPLE, BOLD, GREEN
-from coordinates import pt_yxyx2xyxy
+from helpers.constants import RED, END_COLOR, BLUE, DEFAULT_DETECTED_IMAGE_DIR, PURPLE, BOLD, GREEN
+from helpers.coordinates import pt_yxyx2xyxy
 from detect import Detector, get_counter_detections
 from python_utils.plots import plot_boxes
 from utils.datasets import LoadImages

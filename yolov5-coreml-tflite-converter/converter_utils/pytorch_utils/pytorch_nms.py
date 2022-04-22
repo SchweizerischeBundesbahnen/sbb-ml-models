@@ -1,9 +1,9 @@
 import torchvision.ops
 from torch import nn
 
-from constants import SCORE_SLICE, CLASSES_SLICE, WH_SLICE, DEFAULT_MAX_NUMBER_DETECTION, DEFAULT_IOU_THRESHOLD, \
+from helpers.constants import SCORE_SLICE, CLASSES_SLICE, WH_SLICE, DEFAULT_MAX_NUMBER_DETECTION, DEFAULT_IOU_THRESHOLD, \
     DEFAULT_CONF_THRESHOLD, NORMALIZATION_FACTOR
-from coordinates import pt_xywh2yxyx_yolo
+from helpers.coordinates import pt_xywh2yxyx_yolo
 
 
 class YoloNMS(nn.Module):

@@ -2,7 +2,7 @@ import logging
 
 import coremltools as ct
 
-from constants import IMAGE_NAME, NB_OUTPUTS, NORMALIZATION_FACTOR, BATCH_SIZE, END_COLOR, BLUE, GREEN, RED
+from helpers.constants import IMAGE_NAME, NB_OUTPUTS, NORMALIZATION_FACTOR, BATCH_SIZE, END_COLOR, BLUE, GREEN, RED
 
 
 class TorchscriptToRawCoreMLConverter:

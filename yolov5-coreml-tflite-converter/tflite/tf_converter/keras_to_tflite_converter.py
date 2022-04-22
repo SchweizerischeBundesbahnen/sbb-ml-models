@@ -2,7 +2,7 @@ import time
 import logging
 import tensorflow as tf
 
-from constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, FULLINT8, INT8, FLOAT16, FLOAT32, COMBINED, BLUE, \
+from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, FULLINT8, INT8, FLOAT16, FLOAT32, COMBINED, BLUE, \
     END_COLOR, RED, GREEN
 from tf_metadata.metadata_writer import MetadataWriter
 from tf_utils.io_order import IOOrder
