@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "==1.21.0"
+numpy = "==1.22.0"
 torch = "==1.7.1"
 torchvision = "==0.8.2"
 tensorboard = "==2.4.1"
