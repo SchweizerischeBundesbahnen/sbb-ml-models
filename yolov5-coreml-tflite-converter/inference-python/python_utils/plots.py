@@ -1,6 +1,6 @@
 import cv2
 
-from coordinates import scale_coords_yolo
+from helpers.coordinates import scale_coords_yolo
 
 WHITE_COLOR = (225, 255, 255)
 

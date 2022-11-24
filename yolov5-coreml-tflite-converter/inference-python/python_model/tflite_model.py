@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 from tflite_support import metadata as _metadata
 
-from constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, BOUNDINGBOX_NAME, \
+from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, BOUNDINGBOX_NAME, \
     CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, SIMPLE
 from tf_model.tf_nms import NMS
 from tf_utils.parameters import PostprocessingParameters

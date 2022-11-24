@@ -22,7 +22,7 @@
 
 from argparse import ArgumentParser
 
-from constants import DEFAULT_MODEL_OUTPUT_DIR, DEFAULT_COREML_NAME, DEFAULT_INPUT_RESOLUTION, \
+from helpers.constants import DEFAULT_MODEL_OUTPUT_DIR, DEFAULT_COREML_NAME, DEFAULT_INPUT_RESOLUTION, \
     DEFAULT_QUANTIZATION_TYPE
 from coreml_converter.pytorch_to_coreml_converter import PytorchToCoreMLConverter
 

@@ -6,7 +6,7 @@ from tflite_support import flatbuffers
 from tflite_support import metadata as _metadata
 from tflite_support import metadata_schema_py_generated as _metadata_fb
 
-from constants import FULLINT8, LABELS_NAME
+from helpers.constants import FULLINT8, LABELS_NAME
 from tf_metadata.input_metadata_writer import InputMetadataWriter
 from tf_metadata.output_metadata_writer import OutputMetadataWriter
 

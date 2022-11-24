@@ -1,8 +1,8 @@
 import tensorflow as tf
 
-from constants import WH_SLICE, SCORE_SLICE, CLASSES_SLICE, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, SIMPLE, \
+from helpers.constants import WH_SLICE, SCORE_SLICE, CLASSES_SLICE, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, SIMPLE, \
     PADDED, COMBINED
-from coordinates import tf_xywh2yxyx_yolo
+from helpers.coordinates import tf_xywh2yxyx_yolo
 from tf_utils.parameters import PostprocessingParameters
 
 

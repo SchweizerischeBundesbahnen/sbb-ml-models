@@ -3,15 +3,15 @@ from pathlib import Path
 
 import coremltools as ct
 
-from constants import FLOAT32_SUFFIX, FLOAT16_SUFFIX, INT8_SUFFIX, FLOAT32, FLOAT16, INT8, COREML_SUFFIX
-from constants import OUTPUT_DIR, DEFAULT_COREML_NAME, DEFAULT_QUANTIZATION_TYPE, \
+from helpers.constants import FLOAT32_SUFFIX, FLOAT16_SUFFIX, INT8_SUFFIX, FLOAT32, FLOAT16, INT8, COREML_SUFFIX
+from helpers.constants import OUTPUT_DIR, DEFAULT_COREML_NAME, DEFAULT_QUANTIZATION_TYPE, \
     DEFAULT_INPUT_RESOLUTION, BLUE, END_COLOR, GREEN, RED
 from coreml_converter.torchscript_exporter import TorchscriptExporter
 from coreml_converter.torchscript_to_coreml_converter import TorchscriptToRawCoreMLConverter
 from coreml_model.coreml_export_layer import CoreMLExportLayerGenerator
 from coreml_model.model_spec_generator import ModelSpecGenerator
 from coreml_model.nms_model_spec_generator import NMSModelSpecGenerator
-from pytorch_loader import PyTorchModelLoader
+from pytorch_utils.pytorch_loader import PyTorchModelLoader
 
 
 class PytorchToCoreMLConverter:

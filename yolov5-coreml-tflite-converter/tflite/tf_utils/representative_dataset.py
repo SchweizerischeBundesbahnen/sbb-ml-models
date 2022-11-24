@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from utils.datasets import LoadImages
 
-from constants import DATA_DIR, get_zipfile_path, get_dataset_url
+from helpers.constants import DATA_DIR, get_zipfile_path, get_dataset_url
 import logging
 
 class RepresentativeDatasetGenerator:

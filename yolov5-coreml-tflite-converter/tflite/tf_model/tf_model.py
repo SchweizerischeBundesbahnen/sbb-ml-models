@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 from models.tf import parse_model
 
-from constants import NB_CHANNEL, NORMALIZATION_FACTOR
+from helpers.constants import NB_CHANNEL, NORMALIZATION_FACTOR
 from tf_model.tf_nms import NMS
 from tf_utils.parameters import ModelParameters, PostprocessingParameters
 

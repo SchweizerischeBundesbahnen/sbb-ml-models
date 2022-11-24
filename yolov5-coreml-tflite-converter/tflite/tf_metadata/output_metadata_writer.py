@@ -2,7 +2,7 @@ import os
 
 from tflite_support import metadata_schema_py_generated as _metadata_fb
 
-from constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, PREDICTIONS_NAME
+from helpers.constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, PREDICTIONS_NAME
 from tf_metadata.metadata_utils import MetadataHelper
 
 
