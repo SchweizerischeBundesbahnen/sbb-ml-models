@@ -3,12 +3,8 @@
 
 The code requires the original YOLOv5 code, as found here: https://github.com/ultralytics/yolov5/tree/v6.0. 
 
-In order for the dependency install to work, you need to:
-- provide a copy of that repository at `yolov5`, relative to this file (`git clone -b v6.0 --depth 1 https://github.com/ultralytics/yolov5`)
-- add a `setup.py` file in that directory. The minimal content for that file can be taken from `yolov5.setup.py`
-- replace the two files `yolov5/models/yolo.py` and `yolov5/models/tf.py` by `yolov5.yolo.py` and `yolov5.tf.py`, renamed to `yolo.py` and `tf.py`, respectively
-
-After this is done, install the dependencies with pip: `pip install -r requirements.txt`.
+Pipenv is used to handle the dependencies, so make sure you have Pipenv installed on your machine. Then run `./install.sh`.
+There may be some issue with the torch library, and workarounds may be found here: https://github.com/ultralytics/yolov5/issues/6948#issuecomment-1075528897
 
 
 ## YOLOv5 (PyTorch) to CoreML format conversion
