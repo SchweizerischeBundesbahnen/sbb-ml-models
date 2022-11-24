@@ -2,9 +2,9 @@ import logging
 
 import torch
 
-from constants import BATCH_SIZE, DEFAULT_INPUT_RESOLUTION
-from pytorch_loader import PyTorchModelLoader
-from pytorch_nms import YoloNMS
+from helpers.constants import BATCH_SIZE, DEFAULT_INPUT_RESOLUTION
+from pytorch_utils.pytorch_loader import PyTorchModelLoader
+from pytorch_utils.pytorch_nms import YoloNMS
 
 
 class PyTorchModel:

@@ -3,8 +3,8 @@ import logging
 import torch
 from coremltools.models.model import MLModel
 
-from constants import BATCH_SIZE, IMAGE_NAME, IOU_NAME, CONF_NAME, CONFIDENCE_NAME, COORDINATES_NAME
-from pytorch_nms import pt_xywh2yxyx_yolo
+from helpers.constants import BATCH_SIZE, IMAGE_NAME, IOU_NAME, CONF_NAME, CONFIDENCE_NAME, COORDINATES_NAME
+from pytorch_utils.pytorch_nms import pt_xywh2yxyx_yolo
 
 
 class CoreMLModel():

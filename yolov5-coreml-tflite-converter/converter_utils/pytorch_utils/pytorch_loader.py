@@ -2,7 +2,7 @@ import torch
 from models.experimental import attempt_load
 from torch import nn
 
-from constants import DEFAULT_INPUT_RESOLUTION, BATCH_SIZE, NB_CHANNEL
+from helpers.constants import DEFAULT_INPUT_RESOLUTION, BATCH_SIZE, NB_CHANNEL
 
 
 class PyTorchModelLoader:

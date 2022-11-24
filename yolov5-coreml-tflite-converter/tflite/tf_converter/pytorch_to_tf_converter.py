@@ -3,11 +3,11 @@ from pathlib import Path
 
 import tensorflow as tf
 
-from constants import OUTPUT_DIR, DEFAULT_TFLITE_NAME, DEFAULT_IOU_THRESHOLD, \
+from helpers.constants import OUTPUT_DIR, DEFAULT_TFLITE_NAME, DEFAULT_IOU_THRESHOLD, \
     DEFAULT_CONF_THRESHOLD, FLOAT32_SUFFIX, FLOAT16_SUFFIX, INT8_SUFFIX, FULLINT8_SUFFIX, TFLITE, SAVED_MODEL, \
     FLOAT32, \
     FLOAT16, INT8, FULLINT8, SIMPLE, COMBINED, TFLITE_SUFFIX, END_COLOR, BLUE, GREEN, RED
-from pytorch_loader import PyTorchModelLoader
+from pytorch_utils.pytorch_loader import PyTorchModelLoader
 from tf_converter.keras_to_tflite_converter import KerasToTFLiteConverter
 from tf_model.keras_model import KerasModel
 from tf_utils.parameters import ModelParameters, ConversionParameters, PostprocessingParameters

@@ -2,7 +2,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from constants import RED, END_COLOR, DEFAULT_MODEL_OUTPUT_DIR
+from helpers.constants import RED, END_COLOR, DEFAULT_MODEL_OUTPUT_DIR
 from test_model import ModelTest
 
 
