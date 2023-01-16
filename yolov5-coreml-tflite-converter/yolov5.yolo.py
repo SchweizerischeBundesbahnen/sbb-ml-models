@@ -10,6 +10,7 @@ import argparse
 import sys
 from copy import deepcopy
 from pathlib import Path
+import logging
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLOv5 root directory

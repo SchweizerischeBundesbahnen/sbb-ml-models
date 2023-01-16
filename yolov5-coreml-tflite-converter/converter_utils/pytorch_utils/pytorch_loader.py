@@ -4,7 +4,6 @@ from torch import nn
 
 from helpers.constants import DEFAULT_INPUT_RESOLUTION, BATCH_SIZE, NB_CHANNEL
 
-
 class PyTorchModelLoader:
 
     def __init__(self, model_input_path, input_resolution=DEFAULT_INPUT_RESOLUTION):
@@ -12,7 +11,10 @@ class PyTorchModelLoader:
         self.input_resolution = input_resolution
 
     def __load_model(self, fuse):
-        self.model = attempt_load(self.model_input_path, map_location='cpu', inplace=True, fuse=fuse)
+        try:
+            self.model = attempt_load(self.model_input_path, device='cpu', inplace=True, fuse=fuse)
+        except:
+            self.model = attempt_load(self.model_input_path)
 
     def __dry_run(self):
         self.model.eval()  # Will return predictions, model outputs

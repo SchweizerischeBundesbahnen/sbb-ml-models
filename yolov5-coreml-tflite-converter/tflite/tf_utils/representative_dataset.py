@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from utils.datasets import LoadImages
+from utils.dataloaders import LoadImages
 
 from helpers.constants import DATA_DIR, get_zipfile_path, get_dataset_url
 import logging
