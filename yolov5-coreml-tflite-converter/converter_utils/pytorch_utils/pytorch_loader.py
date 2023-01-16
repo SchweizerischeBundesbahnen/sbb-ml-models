@@ -36,7 +36,7 @@ class PyTorchModelLoader:
 class ModelWrapper:
     def __init__(self, model, input_resolution):
         self.torch_model = model
-        self.class_labels = model.names
+        self.class_labels = model.names.values()
         self.strides = model.stride
         self.feature_map_dimensions = [input_resolution // int(stride) for stride in self.strides]
         self.anchors = model.model[-1].anchors

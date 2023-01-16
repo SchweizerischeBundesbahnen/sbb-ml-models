@@ -49,7 +49,7 @@ class CoreMLExportLayerGenerator:
             # (x,y * 2 - 0.5 + grid[i]) * stride[i]
             builder.add_elementwise(name=f"multiply_xy_by_stride_{outputName}", input_names=[
                 f"{outputName}_added_grid_xy"], output_name=f"{outputName}_calculated_xy", mode="MULTIPLY",
-                                    alpha=self.model.strides[i])
+                                    alpha=self.model.strides[i].item())
 
             # input (1, nA, nC, nC, nO), output (1, nA, nC, nC, 2)
             # input[2:4] = w,h
