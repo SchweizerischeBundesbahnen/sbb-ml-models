@@ -38,7 +38,7 @@ class CoreMLModel():
         scores = torch.max(torch.from_numpy(predictions[CONFIDENCE_NAME]), dim=1).values
         nb_detected = predictions[COORDINATES_NAME].shape[0]
 
-        return yxyx.unsqueeze(0), classes.unsqueeze(0), scores.unsqueeze(0), torch.Tensor([nb_detected])
+        return yxyx.unsqueeze(0), classes.unsqueeze(0), scores.unsqueeze(0), None, torch.Tensor([nb_detected])
 
     def get_labels(self):
         return self.labels

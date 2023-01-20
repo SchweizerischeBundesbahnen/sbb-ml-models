@@ -6,10 +6,10 @@ import tensorflow as tf
 from tflite_support import metadata as _metadata
 
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, BOUNDINGBOX_NAME, \
-    CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, SIMPLE
+    CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, SIMPLE, MASKS_NAME
 from tf_model.tf_nms import NMS
 from tf_utils.parameters import PostprocessingParameters
-
+import torch.nn.functional as F
 
 class TFLiteModel:
     def __init__(self, model_path):
@@ -91,7 +91,13 @@ class TFLiteModel:
             scores = interpreter.get_tensor(output_details[output_order.index(SCORES_NAME)]['index'])
             nb_detected = interpreter.get_tensor(output_details[output_order.index(NUMBER_NAME)]['index'])
 
-        return yxyx, classes, scores, nb_detected
+            if MASKS_NAME in output_order:
+                import torch
+                masks = torch.Tensor(interpreter.get_tensor(output_details[output_order.index(MASKS_NAME)]['index']))
+                masks = F.interpolate(masks[None], self.img_size, mode='bilinear', align_corners=False)[0]  # CHW
+                return yxyx, classes, scores, masks.gt_(0.5).numpy(), nb_detected
+
+        return yxyx, classes, scores, None, nb_detected
 
     def __load_labels(self):
         associated_files = self.metadata_displayer.get_packed_associated_file_list()
@@ -131,7 +137,16 @@ class TFLiteModel:
         # Check the outputs
 
         if len(output_order) == 4:
+            # Detection
             expected_output_name = [BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME]
+            for output_name in output_order:
+                if output_name not in expected_output_name:
+                    raise ValueError(f'Unknown output: {output_name}')
+                expected_output_name.remove(output_name)
+            do_nms = False
+        elif len(output_order) == 5:
+            # Segmentation
+            expected_output_name = [BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, MASKS_NAME]
             for output_name in output_order:
                 if output_name not in expected_output_name:
                     raise ValueError(f'Unknown output: {output_name}')

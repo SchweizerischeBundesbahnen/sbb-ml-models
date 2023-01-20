@@ -1,18 +1,54 @@
+"""Converts a Pytorch Yolo model to a TFLite model.
+
+Usage
+----------
+```shell
+convert.py [-h] --model MODEL_INPUT_PATH [--model-type MODEL_TYPE] [--out MODEL_OUTPUT_DIRECTORY]
+                  [--output-name MODEL_OUTPUT_NAME] [--input-resolution INPUT_RESOLUTION [INPUT_RESOLUTION ...]]
+                  [--quantize-model QUANTIZATION_TYPES [QUANTIZATION_TYPES ...]] [--no-nms] [--no-normalization]
+                  [--max-det MAX_DET] [--nms-type NMS_TYPE]
+```
+
+optional arguments:
+```shell
+  -h, --help            show this help message and exit
+  --model MODEL_INPUT_PATH
+                        The path to yolov5 model.
+  --model-type MODEL_TYPE
+                        The type of model: one of 'detection', 'segmentation'. Default: detection
+  --out MODEL_OUTPUT_DIRECTORY
+                        The path to the directory in which to save the converted model. Default: data/output/converted_models
+  --output-name MODEL_OUTPUT_NAME
+                        The model output name. Default: yolov5-TFLite
+  --input-resolution INPUT_RESOLUTION [INPUT_RESOLUTION ...]
+                        The resolution of the input images, e.g. 640 means input resolution is 640x640. Default: 640
+  --quantize-model QUANTIZATION_TYPES [QUANTIZATION_TYPES ...]
+                        Quantization: 'int8', 'float16' or 'float32' for no quantization. Default: [float32]
+  --no-nms              If set, the converted model does not include the postprocessing (NMS)
+  --no-normalization    If set, the converted model does not include the preprocessing (normalization)
+  --max-det MAX_DET     The maximum number of detections. Default: 20.
+  --nms-type NMS_TYPE   NMS algorithm used: one of 'simple', 'padded', 'combined'.
+  ```
+"""
+
 import argparse
 
 from helpers.constants import DEFAULT_MODEL_OUTPUT_DIR, DEFAULT_TFLITE_NAME, DEFAULT_INPUT_RESOLUTION, \
-    DEFAULT_QUANTIZATION_TYPE, DEFAULT_SOURCE_DATASET, \
-    DEFAULT_NB_CALIBRATION, DEFAULT_MAX_NUMBER_DETECTION, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, SIMPLE, PADDED, \
-    COMBINED, BAHNHOF, WAGEN, TRAKTION
+    DEFAULT_QUANTIZATION_TYPE, DEFAULT_MAX_NUMBER_DETECTION, SIMPLE, PADDED, \
+    COMBINED, DETECTION, SEGMENTATION
 from tf_converter.pytorch_to_tf_converter import PytorchToTFConverter
 from tf_utils.parameters import ModelParameters, ConversionParameters, PostprocessingParameters
 
 
 def main():
+    """Converts a Pytorch Yolo model to a TFLite model."""
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--model', type=str, dest="model_input_path", required=True,
                         help=f"The path to yolov5 model.")
+    parser.add_argument('--model-type', type=str, dest="model_type",
+                        help=f"The type of model: one of '{DETECTION}', '{SEGMENTATION}'. Default: {DETECTION}",
+                        default=DETECTION)
     parser.add_argument('--out', type=str, dest="model_output_directory", default=DEFAULT_MODEL_OUTPUT_DIR,
                         help=f"The path to the directory in which to save the converted model. Default: {DEFAULT_MODEL_OUTPUT_DIR}")
     parser.add_argument('--output-name', type=str, dest="model_output_name",
@@ -34,10 +70,10 @@ def main():
     parser.add_argument('--nms-type', default=PADDED,
                         help=f"NMS algorithm used: one of '{SIMPLE}', '{PADDED}', '{COMBINED}'.")
 
-
     opt = parser.parse_args()
 
-    model_parameters = ModelParameters(img_size=opt.input_resolution,
+    model_parameters = ModelParameters(model_type=opt.model_type,
+                                       img_size=opt.input_resolution,
                                        include_nms=not opt.no_nms,
                                        include_normalization=not opt.no_normalization)
 

@@ -15,6 +15,8 @@ class PyTorchModelLoader:
             self.model = attempt_load(self.model_input_path, device='cpu', inplace=True, fuse=fuse)
         except:
             self.model = attempt_load(self.model_input_path)
+        if isinstance(self.model.names, dict):
+            self.model.names = list(self.model.names.values())
 
     def __dry_run(self):
         self.model.eval()  # Will return predictions, model outputs
@@ -36,7 +38,7 @@ class PyTorchModelLoader:
 class ModelWrapper:
     def __init__(self, model, input_resolution):
         self.torch_model = model
-        self.class_labels = model.names.values()
+        self.class_labels = model.names
         self.strides = model.stride
         self.feature_map_dimensions = [input_resolution // int(stride) for stride in self.strides]
         self.anchors = model.model[-1].anchors

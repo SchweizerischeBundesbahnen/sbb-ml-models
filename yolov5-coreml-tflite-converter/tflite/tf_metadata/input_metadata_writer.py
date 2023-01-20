@@ -1,11 +1,33 @@
 from tflite_support import metadata_schema_py_generated as _metadata_fb
+from typing import List
 
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX
 from tf_metadata.metadata_utils import MetadataHelper
 
 
 class InputMetadataWriter(MetadataHelper):
-    def __init__(self, input_order, img_size, normalized, quantized, multiple_inputs=False):
+    """ Class that writes the input metadata for a TFLite model
+
+    Attributes
+    ----------
+    input_order: List[str]
+        The names of the inputs in order
+
+    img_size: (int, int)
+        The size of the input image
+
+    normalized: bool
+        Whether the model includes normalization
+
+    quantized: bool
+        Whether the model is fully quantized (expects int8 values)
+
+    multiple_inputs: bool
+        Whether the model has several inputs
+    """
+
+    def __init__(self, input_order: List[str], img_size: (int, int), normalized: bool, quantized: bool,
+                 multiple_inputs: bool = False):
         self.input_order = input_order
         self.img_size = img_size
         self.normalized = normalized
@@ -13,8 +35,10 @@ class InputMetadataWriter(MetadataHelper):
         self.multiple_inputs = multiple_inputs
 
     def write(self):
+        """ Writes the input metadata """
         image_meta = self.__create_image_meta()
         if self.multiple_inputs:
+            # NMS is included, the model expects 3 inputs
             if len(self.input_order) != 3:
                 raise ValueError(
                     f"Expected 3 inputs ({IMAGE_NAME}, {IOU_NAME}, {CONF_NAME}) but got {len(self.input_order)} input{'s' if len(self.input_order) > 1 else ''} ({', '.join(self.input_order)})")
@@ -25,12 +49,14 @@ class InputMetadataWriter(MetadataHelper):
             input_metadata = [input_map[output_name] for output_name in self.input_order]
             return input_metadata
         else:
+            # The model expects only an image
             if len(self.input_order) != 1:
                 ValueError(
                     f"Expected 1 input ({IMAGE_NAME}) but got {len(self.input_order)} input{'s' if len(self.input_order) > 1 else ''} ({', '.join(self.input_order)})")
             return [image_meta]
 
     def __create_image_meta(self):
+        # Create the metadata for the input image
         image_meta = _metadata_fb.TensorMetadataT()
         # Input name
         image_meta.name = IMAGE_NAME
@@ -56,6 +82,7 @@ class InputMetadataWriter(MetadataHelper):
         return image_meta
 
     def __create_iou_meta(self):
+        # Creates the metadata for the IoU threshold
         iou_meta = _metadata_fb.TensorMetadataT()
         iou_meta.name = IOU_NAME
         iou_meta.description = "The IoU threshold for NMS"
@@ -64,6 +91,7 @@ class InputMetadataWriter(MetadataHelper):
         return iou_meta
 
     def __create_conf_meta(self):
+        # Creates the metadata for the confidence threshold
         conf_meta = _metadata_fb.TensorMetadataT()
         conf_meta.name = CONF_NAME
         conf_meta.description = "The confidence threshold for NMS"
