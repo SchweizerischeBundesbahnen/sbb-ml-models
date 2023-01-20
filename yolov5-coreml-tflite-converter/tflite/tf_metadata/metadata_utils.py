@@ -2,7 +2,9 @@ from tflite_support import metadata_schema_py_generated as _metadata_fb
 
 
 class MetadataHelper:
-    def _add_content_image(self, meta):
+    """ Helper class that contains utils functions to help write the TFLite metadata """
+    @staticmethod
+    def _add_content_image(meta):
         # Image RGB
         meta.content = _metadata_fb.ContentT()
         meta.content.contentProperties = _metadata_fb.ImagePropertiesT()
@@ -10,12 +12,14 @@ class MetadataHelper:
             _metadata_fb.ColorSpaceType.RGB)
         meta.content.contentPropertiesType = (_metadata_fb.ContentProperties.ImageProperties)
 
-    def _add_content_feature(self, meta):
+    @staticmethod
+    def _add_content_feature(meta):
         meta.content = _metadata_fb.ContentT()
         meta.content.content_properties = (_metadata_fb.FeaturePropertiesT())
         meta.content.contentPropertiesType = (_metadata_fb.ContentProperties.FeatureProperties)
 
-    def _add_content_bounding_box(self, meta):
+    @staticmethod
+    def _add_content_bounding_box(meta):
         # Bounding box y1, x1, y2, x2
         meta.content = _metadata_fb.ContentT()
         meta.content.contentPropertiesType = (_metadata_fb.ContentProperties.BoundingBoxProperties)
@@ -24,7 +28,8 @@ class MetadataHelper:
         meta.content.contentProperties.type = (_metadata_fb.BoundingBoxType.BOUNDARIES)
         meta.content.contentProperties.coordinateType = (_metadata_fb.CoordinateType.RATIO)
 
-    def _add_normalization(self, meta, mean, std):
+    @staticmethod
+    def _add_normalization(meta, mean, std):
         normalization_unit = _metadata_fb.ProcessUnitT()
         normalization_unit.optionsType = (
             _metadata_fb.ProcessUnitOptions.NormalizationOptions)
@@ -33,12 +38,14 @@ class MetadataHelper:
         normalization_unit.options.std = [std]
         meta.processUnits = [normalization_unit]
 
-    def _add_range(self, meta):
+    @staticmethod
+    def _add_range(meta):
         meta.content.range = _metadata_fb.ValueRangeT()
         meta.content.range.min = 2
         meta.content.range.max = 2
 
-    def _add_stats(self, meta, max, min):
+    @staticmethod
+    def _add_stats(meta, max, min):
         stats = _metadata_fb.StatsT()
         stats.max = [max]
         stats.min = [min]

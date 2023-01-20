@@ -10,7 +10,7 @@ from helpers.constants import RED, END_COLOR, BLUE, DEFAULT_DETECTED_IMAGE_DIR, 
 from helpers.coordinates import pt_yxyx2xyxy
 from detect import Detector, get_counter_detections
 from python_utils.plots import plot_boxes
-from utils.datasets import LoadImages
+from utils.dataloaders import LoadImages
 from utils.metrics import ap_per_class
 from val import process_batch
 
@@ -29,10 +29,10 @@ class ComparisonTest:
             print(f"{RED}Model not found:{END_COLOR} '{self.reference_model_path}'")
             exit(1)
 
-    def __check_classes(self, class_labels, reference_class_labels):
+    def __check_classes(self, reference_class_labels, class_labels):
         if len(class_labels) != len(reference_class_labels):
             raise ValueError(
-                f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes.")
+                f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes. {reference_class_labels} != {class_labels}")
         else:
             for c in class_labels:
                 if c not in reference_class_labels:
@@ -94,12 +94,12 @@ class ComparisonTest:
 
         if self.reference_detector.img_size != self.detector.img_size:
             reference_dataset = LoadImages(self.data_path, img_size=self.reference_detector.img_size, auto=False)
-            for i, ((img_path, img, img_orig, _), (_, reference_img, _, _)) in enumerate(
+            for i, ((img_path, img, img_orig, _, _), (_, reference_img, _, _, _)) in enumerate(
                     zip(dataset, reference_dataset)):
                 self.__run_inference(i, img_path, img, reference_img)
         else:
             dataset = LoadImages(self.data_path, img_size=self.detector.img_size, auto=False)
-            for i, (img_path, img, img_orig, _) in enumerate(dataset):
+            for i, (img_path, img, img_orig, _, _) in enumerate(dataset):
                 self.__run_inference(i, img_path, img, img)
 
         ct = np.mean(self.inference_time[0])
@@ -114,7 +114,7 @@ class ComparisonTest:
         success = True
         stat = [np.concatenate(x, 0) for x in zip(*self.stats)]
         if len(stat) and stat[0].any():
-            p, r, ap, f1, ap_class = ap_per_class(*stat, plot=False, names=self.class_labels)
+            tp, fp, p, r, f1, ap, ap_class = ap_per_class(*stat, plot=False, names=dict(enumerate(self.class_labels)))
             ap50, ap = ap[:, 0], ap.mean(1)  # AP@0.5, AP@0.5:0.95
             mp, mr, map50, map = p.mean(), r.mean(), ap50.mean(), ap.mean()
             nt = np.bincount(stat[3].astype(np.int64), minlength=len(self.class_labels))  # number of targets per class

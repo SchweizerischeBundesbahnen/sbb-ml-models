@@ -1,0 +1,16 @@
+.DS_Store
+.idea/
+build/
+*.egg-info/
+__pycache__/
+
+data/
+images/
+models/
+
+Jenkinsfile
+
+convert_model.sh
+
+Tflite-support/
+yolov5/

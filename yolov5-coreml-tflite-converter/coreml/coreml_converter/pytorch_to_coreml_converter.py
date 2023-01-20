@@ -43,7 +43,7 @@ class PytorchToCoreMLConverter:
         # Load the model
         logging.info(f'{BLUE}Loading PyTorch model...{END_COLOR}')
         self.model = PyTorchModelLoader(self.model_input_path, self.input_resolution).load_wrapper()
-        self.model.torch_model.model[-1].coreml_export = True
+        self.model.torch_model.model[-1].training = True
 
         # Get CoreML spec
         model_spec = self.__get_coreml_spec()

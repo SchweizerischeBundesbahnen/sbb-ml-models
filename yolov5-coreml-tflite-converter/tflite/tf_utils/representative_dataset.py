@@ -9,7 +9,24 @@ from utils.dataloaders import LoadImages
 from helpers.constants import DATA_DIR, get_zipfile_path, get_dataset_url
 import logging
 
+
 class RepresentativeDatasetGenerator:
+    """ Dataset generator for the representative dataset used during quantization
+
+    Attributes
+    ----------
+    model_parameters: ModelParameters
+        The parameters for the model to be converted (e.g. type, use nms, ...)
+
+    conversion_parameters: ConversionParameters
+        The parameters for the conversion (e.g. quantization types, ...)
+
+    iou_threshold: float
+        The IoU threshold
+
+    conf_threshold: float
+        The confidence threshold
+    """
     def __init__(self, model_parameters, conversion_parameters, iou_threshold, conf_threshold):
         self.model_parameters = model_parameters
         self.conversion_parameters = conversion_parameters
@@ -17,6 +34,13 @@ class RepresentativeDatasetGenerator:
         self.conf_threshold = conf_threshold
 
     def generate(self):
+        """ Generates a representative dataset from the source dataset
+
+        Returns
+        ----------
+        representative_dataset
+            The representative dataset that can be used for the TFlite conversion
+        """
         source = self.__download_representative_dataset()
         dataset = LoadImages(source, img_size=self.model_parameters.img_size, auto=False)
         return self.__representative_dataset_gen(dataset)
@@ -43,11 +67,14 @@ class RepresentativeDatasetGenerator:
         return representative_dataset
 
     def __download_representative_dataset(self):
+        # Creates target directory
         if not os.path.exists(DATA_DIR):
             os.makedirs(DATA_DIR)
 
+        # Get the name of the dataset and dataset zip
         file_path = get_zipfile_path(self.conversion_parameters.source)
         dataset_path = file_path.rstrip('.zip')
+        # If it does not exist, download it
         if not os.path.exists(dataset_path):
             logging.info(f'Downloading reference dataset for {self.conversion_parameters.source}...')
             dataset_url = get_dataset_url(self.conversion_parameters.source)
