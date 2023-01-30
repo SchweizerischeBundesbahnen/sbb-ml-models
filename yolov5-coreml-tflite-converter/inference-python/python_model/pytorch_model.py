@@ -15,7 +15,7 @@ class PyTorchModel:
         self.model = PyTorchModelLoader(model_path, input_resolution).load(fuse=True)
 
         # Load labels
-        self.labels = self.model.names
+        self.labels = self.model.class_labels
 
         self.img_size = (input_resolution, input_resolution)
         logging.info(f"- There are {len(self.labels)} labels.")

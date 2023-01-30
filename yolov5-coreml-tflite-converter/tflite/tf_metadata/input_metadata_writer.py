@@ -1,8 +1,9 @@
-from tflite_support import metadata_schema_py_generated as _metadata_fb
 from typing import List
 
-from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX
 from tf_metadata.metadata_utils import MetadataHelper
+from tflite_support import metadata_schema_py_generated as _metadata_fb
+
+from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX
 
 
 class InputMetadataWriter(MetadataHelper):
@@ -13,7 +14,7 @@ class InputMetadataWriter(MetadataHelper):
     input_order: List[str]
         The names of the inputs in order
 
-    img_size: (int, int)
+    input_resolution: int
         The size of the input image
 
     normalized: bool
@@ -26,15 +27,15 @@ class InputMetadataWriter(MetadataHelper):
         Whether the model has several inputs
     """
 
-    def __init__(self, input_order: List[str], img_size: (int, int), normalized: bool, quantized: bool,
+    def __init__(self, input_order: List[str], input_resolution: int, normalized: bool, quantized: bool,
                  multiple_inputs: bool = False):
         self.input_order = input_order
-        self.img_size = img_size
+        self.input_resolution = input_resolution
         self.normalized = normalized
         self.quantized = quantized
         self.multiple_inputs = multiple_inputs
 
-    def write(self):
+    def write(self) -> List[_metadata_fb.TensorMetadataT]:
         """ Writes the input metadata """
         image_meta = self.__create_image_meta()
         if self.multiple_inputs:
@@ -67,7 +68,7 @@ class InputMetadataWriter(MetadataHelper):
             image_meta.name += QUANTIZED_SUFFIX
         if self.normalized:
             image_meta.description = (
-                f"Input image to be classified. The expected image is {self.img_size[0]} x {self.img_size[1]}, with "
+                f"Input image to be classified. The expected image is {self.input_resolution} x {self.input_resolution}, with "
                 "three channels (red, blue, and green) per pixel. Each value must be between 0 and 255.")
             self._add_normalization(image_meta, 0, 1)
             self._add_stats(image_meta, 255, 0)
@@ -75,7 +76,7 @@ class InputMetadataWriter(MetadataHelper):
             # Input should be normalized
             image_meta.name += NORMALIZED_SUFFIX
             image_meta.description = (
-                f"Input image to be classified. The expected image is {self.img_size[0]} x {self.img_size[1]}, with "
+                f"Input image to be classified. The expected image is {self.input_resolution} x {self.input_resolution}, with "
                 "three channels (red, blue, and green) per pixel. The values should be normalized and between 0 and 1.")
             self._add_normalization(image_meta, 0, 255)
             self._add_stats(image_meta, 1.0, 0.0)

@@ -16,32 +16,32 @@ from pytorch_utils.pytorch_loader import PyTorchModelLoader
 class PytorchToTFConverter:
     """ Class to convert a Pytorch model to a Keras model, saved as saved_model or TFLite
 
-            Attributes
-            ----------
-            model_input_path: String
-                The path to the Pytorch model
+    Attributes
+    ----------
+    model_input_path: String
+        The path to the Pytorch model
 
-            model_output_directory: String
-                The path to the directory in which to save the model
+    model_output_directory: String
+        The path to the directory in which to save the model
 
-            model_output_name: String
-                The name of the converted model (without extension)
+    model_output_name: String
+        The name of the converted model (without extension)
 
-            model_parameters: ModelParameters
-                The parameters for the model to be converted (e.g. type, use nms, ...)
+    model_parameters: ModelParameters
+        The parameters for the model to be converted (e.g. type, use nms, ...)
 
-            conversion_parameters: ConversionParameters
-                The parameters for the conversion (e.g. quantization types, ...)
+    conversion_parameters: ConversionParameters
+        The parameters for the conversion (e.g. quantization types, ...)
 
-            postprocessing_parameters: PostprocessingParameters
-                The parameters for the postprocesssing (if any) (e.g. nms type, ...)
+    postprocessing_parameters: PostprocessingParameters
+        The parameters for the postprocesssing (if any) (e.g. nms type, ...)
 
-            iou_threshold: float
-                The IoU threshold, if hard-coded into the converted model
+    iou_threshold: float
+        The IoU threshold, if hard-coded into the converted model
 
-            conf_threshold: float
-                The confidence threshold, if hard-coded into the converted model
-            """
+    conf_threshold: float
+        The confidence threshold, if hard-coded into the converted model
+    """
 
     def __init__(self,
                  model_input_path: str,
@@ -96,16 +96,20 @@ class PytorchToTFConverter:
 
     def __init_pytorch_model(self):
         # Load PyTorch model
-        self.pt_model = PyTorchModelLoader(self.model_input_path, self.model_parameters.img_size[0]).load(fuse=False)
+        logging.info(f'{BLUE}Loading PyTorch model...{END_COLOR}')
+        self.pt_model = PyTorchModelLoader(self.model_input_path, self.model_parameters.input_resolution).load(
+            fuse=False)
 
-        self.labels = self.pt_model.names
-        self.nb_classes = len(self.labels)
-        self.model_parameters.nb_classes = self.nb_classes
+        self.labels = self.pt_model.torch_model.names
+        self.model_parameters.model_type = self.pt_model.model_type
+        self.model_parameters.nb_classes = len(self.labels)
+        logging.info(f"{BLUE}\t- The model has {self.model_parameters.nb_classes} classes{END_COLOR}")
+        logging.info(f"{BLUE}\t- The model is for {self.model_parameters.model_type}{END_COLOR}")
 
     def __create_keras_model(self):
         # Create the Keras model from the Pytorch one
         return KerasModel(model_parameters=self.model_parameters,
-                          postprocessing_parameters=self.postprocessing_parameters).create(self.pt_model,
+                          postprocessing_parameters=self.postprocessing_parameters).create(self.pt_model.torch_model,
                                                                                            self.iou_threshold,
                                                                                            self.conf_threshold)
 
@@ -160,7 +164,7 @@ class PytorchToTFConverter:
             # Specify thresholds if hard-coded
             basename += f'_thres-{self.iou_threshold}-{self.conf_threshold}'
         # Add img size and type
-        basename += f'_{self.model_parameters.img_size[0]}_{self.model_parameters.model_type}'
+        basename += f'_{self.model_parameters.input_resolution}_{self.model_parameters.model_type}'
 
         # Add quantization type
         if quantization_type == INT8:

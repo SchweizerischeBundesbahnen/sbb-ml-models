@@ -37,6 +37,7 @@ IOU_NAME = 'iou threshold'
 CONF_NAME = 'conf threshold'
 
 # Model types
+UNKNOWN = 'unknown'
 DETECTION = 'detection'
 SEGMENTATION = 'segmentation'
 

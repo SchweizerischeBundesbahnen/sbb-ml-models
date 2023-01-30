@@ -1,13 +1,13 @@
+import logging
 from copy import deepcopy
 from pathlib import Path
-import logging
 
-from models.tf import parse_model
+from tf_model.tf_nms import NMS
+from tf_utils.parameters import ModelParameters, PostprocessingParameters
 
 from helpers.constants import NB_CHANNEL, NORMALIZATION_FACTOR, DEFAULT_CONF_THRESHOLD, SEGMENTATION, \
     DEFAULT_IOU_THRESHOLD
-from tf_model.tf_nms import NMS
-from tf_utils.parameters import ModelParameters, PostprocessingParameters
+from models.tf import parse_model
 
 
 class TFModel:
@@ -55,7 +55,8 @@ class TFModel:
 
         # Parse the Pytorch model, and create an equivalent TF model
         self.model, self.savelist, self.nc = parse_model(deepcopy(self.yaml), ch=[ch], model=pt_model,
-                                                         imgsz=model_parameters.img_size)
+                                                         imgsz=(model_parameters.input_resolution,
+                                                                model_parameters.input_resolution))
         self.model_parameters = model_parameters
         self.postprocessing_parameters = postprocessing_parameters
 
@@ -104,8 +105,11 @@ class TFModel:
 
         if self.model_parameters.include_nms:
             if self.model_parameters.model_type == SEGMENTATION:
-                return NMS(self.postprocessing_parameters, iou_thres, conf_thres).compute_with_masks(x, self.nc)
+                # returns location, category, score, masks
+                return NMS(self.postprocessing_parameters, iou_thres, conf_thres).compute_with_masks(x, self.nc,
+                                                                                                     self.model_parameters.input_resolution)
             else:
+                # returns location, category, score
                 return NMS(self.postprocessing_parameters, iou_thres, conf_thres).compute(x, self.nc)
 
         return x

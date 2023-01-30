@@ -3,6 +3,7 @@ from tflite_support import metadata_schema_py_generated as _metadata_fb
 
 class MetadataHelper:
     """ Helper class that contains utils functions to help write the TFLite metadata """
+
     @staticmethod
     def _add_content_image(meta):
         # Image RGB

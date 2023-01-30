@@ -3,7 +3,8 @@ import logging
 import torch
 from coremltools.models.model import MLModel
 
-from helpers.constants import BATCH_SIZE, IMAGE_NAME, IOU_NAME, CONF_NAME, CONFIDENCE_NAME, COORDINATES_NAME
+from helpers.constants import BATCH_SIZE, IMAGE_NAME, IOU_NAME, CONF_NAME, CONFIDENCE_NAME, COORDINATES_NAME, \
+    MASKS_NAME, NUMBER_NAME
 from pytorch_utils.pytorch_nms import pt_xywh2yxyx_yolo
 
 
@@ -15,6 +16,8 @@ class CoreMLModel():
         spec = self.model.get_spec()
         pipeline = spec.pipeline
         self.labels = [label.rstrip() for label in pipeline.models[-1].nonMaximumSuppression.stringClassLabels.vector]
+        if len(self.labels) == 0:
+            self.labels = spec.description.output[-1].shortDescription.split(',')
         logging.info(f"- There are {len(self.labels)} labels.")
 
         input_details = spec.description.input
@@ -30,15 +33,28 @@ class CoreMLModel():
         logging.info(f"- It has {len(output_details)} output{'s' if len(output_details) > 1 else ''}: {output_name}")
 
     def predict(self, img, iou_threshold, conf_threshold):
-        predictions = self.model.predict(
-            {IMAGE_NAME: img, IOU_NAME: iou_threshold, CONF_NAME: conf_threshold})
+        try:
+            predictions = self.model.predict(
+                {IMAGE_NAME: img, IOU_NAME: iou_threshold, CONF_NAME: conf_threshold})
+        except:
+            predictions = self.model.predict(
+                {IMAGE_NAME: img, IOU_NAME: [iou_threshold], CONF_NAME: [conf_threshold]})
 
-        yxyx = pt_xywh2yxyx_yolo(predictions[COORDINATES_NAME])  # coordinates are xywh
-        classes = torch.argmax(torch.from_numpy(predictions[CONFIDENCE_NAME]), dim=1)
-        scores = torch.max(torch.from_numpy(predictions[CONFIDENCE_NAME]), dim=1).values
-        nb_detected = predictions[COORDINATES_NAME].shape[0]
+        yxyx = torch.from_numpy(predictions[COORDINATES_NAME]).view(-1, 4)
+        confidence = torch.from_numpy(predictions[CONFIDENCE_NAME]).view(-1, len(self.labels))
 
-        return yxyx.unsqueeze(0), classes.unsqueeze(0), scores.unsqueeze(0), None, torch.Tensor([nb_detected])
+        yxyx = pt_xywh2yxyx_yolo(yxyx)  # coordinates are xywh
+        classes = torch.argmax(confidence, dim=1)
+        scores = torch.max(confidence, dim=1).values
+        nb_detected = confidence.shape[0]
+
+        if MASKS_NAME in predictions.keys():
+            masks = torch.from_numpy(predictions[MASKS_NAME]).view(-1, self.img_size[0], self.img_size[1])
+            nb_detected = predictions[NUMBER_NAME][0]
+        else:
+            masks = None
+
+        return yxyx.unsqueeze(0), classes.unsqueeze(0), scores.unsqueeze(0), masks, torch.Tensor([nb_detected])
 
     def get_labels(self):
         return self.labels

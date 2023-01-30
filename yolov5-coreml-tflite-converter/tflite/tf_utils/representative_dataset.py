@@ -1,13 +1,13 @@
+import logging
 import os
 import zipfile
 from pathlib import Path
 
 import numpy as np
 import torch
-from utils.dataloaders import LoadImages
 
 from helpers.constants import DATA_DIR, get_zipfile_path, get_dataset_url
-import logging
+from utils.dataloaders import LoadImages
 
 
 class RepresentativeDatasetGenerator:
@@ -27,6 +27,7 @@ class RepresentativeDatasetGenerator:
     conf_threshold: float
         The confidence threshold
     """
+
     def __init__(self, model_parameters, conversion_parameters, iou_threshold, conf_threshold):
         self.model_parameters = model_parameters
         self.conversion_parameters = conversion_parameters
