@@ -8,13 +8,31 @@ from helpers.constants import CONFIDENCE_NAME, COORDINATES_NAME, RAW_PREFIX, IOU
 
 
 class NMSModelSpecGenerator:
+    """ Class that creates specifications for a NMS model
+
+    Attributes
+    ----------
+    model: ModelWrapper
+        The model to be converted to CoreML
+    """
+
     def __init__(self, model):
         self.model = model
 
     def generate(self, builder_spec):
-        '''
-        Create a coreml model with nms to filter the results of the model
-        '''
+        """ Create a coreml model with nms to filter the results of the model
+
+        Parameters
+        ----------
+        builder_spec: Model_pb2
+            The specifications of the model to which the NMS is added
+
+        Returns
+        ----------
+        nms_spec: Model_pb2
+            The specifications of the model with NMS added
+
+        """
         logging.info(f"{BLUE}Creating CoreML NMS model...{END_COLOR}")
         nms_spec = ct.proto.Model_pb2.Model()
         nms_spec.specificationVersion = 4
@@ -33,7 +51,7 @@ class NMSModelSpecGenerator:
         nms_spec.description.output[1].name = COORDINATES_NAME
 
         # Define output shape of the model (#classes and #outputs - objectness score)
-        outputSizes = [self.model.number_of_classes(), NB_OUTPUTS - 1]
+        outputSizes = [self.model.number_of_classes, NB_OUTPUTS - 1]
         for i in range(len(outputSizes)):
             maType = nms_spec.description.output[i].type.multiArrayType
             # First dimension of both output is the number of boxes, which should be flexible

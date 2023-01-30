@@ -1,14 +1,14 @@
+import logging
 import time
 
 import tensorflow as tf
-from models.tf import TFDetect, TFSegment
 from tensorflow import keras
-
-from helpers.constants import BATCH_SIZE, NB_CHANNEL, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, GREEN, BLUE, \
-    END_COLOR, RED, SEGMENTATION
 from tf_model.tf_model import TFModel
 from tf_utils.parameters import ModelParameters, PostprocessingParameters
-import logging
+
+from helpers.constants import BATCH_SIZE, NB_CHANNEL, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, GREEN, BLUE, \
+    END_COLOR, RED
+from models.tf import TFDetect
 
 
 class KerasModel:
@@ -28,7 +28,7 @@ class KerasModel:
         self.postprocessing_parameters = postprocessing_parameters
 
     def create(self, pt_model, iou_threshold: float = DEFAULT_IOU_THRESHOLD,
-               conf_threshold: float = DEFAULT_CONF_THRESHOLD):
+               conf_threshold: float = DEFAULT_CONF_THRESHOLD) -> keras.Model:
         """ Create Keras model from a Pytorch model
 
         Parameters
@@ -47,8 +47,8 @@ class KerasModel:
         start_time = time.time()
         # Get Keras model
         tf_model = TFModel(nc=self.model_parameters.nb_classes, pt_model=pt_model,
-                            model_parameters=self.model_parameters,
-                            postprocessing_parameters=self.postprocessing_parameters)
+                           model_parameters=self.model_parameters,
+                           postprocessing_parameters=self.postprocessing_parameters)
 
         m = tf_model.model.layers[-1]
         assert isinstance(m, TFDetect), f"{RED}Keras model creation failure:{END_COLOR} the last layer must be Detect"
@@ -56,11 +56,14 @@ class KerasModel:
 
         # NHWC Input for TensorFlow
         img = tf.zeros(
-            (BATCH_SIZE, *self.model_parameters.img_size, NB_CHANNEL))  # image size(1, 640, 640, 3)
+            (BATCH_SIZE, self.model_parameters.input_resolution, self.model_parameters.input_resolution,
+             NB_CHANNEL))  # image size(1, 640, 640, 3)
 
         y = tf_model.predict(img)  # dry run
 
-        image_input = keras.Input(shape=(*self.model_parameters.img_size, NB_CHANNEL), batch_size=BATCH_SIZE)
+        image_input = keras.Input(
+            shape=(self.model_parameters.input_resolution, self.model_parameters.input_resolution, NB_CHANNEL),
+            batch_size=BATCH_SIZE)
         if self.model_parameters.include_nms:
             if self.model_parameters.include_threshold:
                 # Input: image

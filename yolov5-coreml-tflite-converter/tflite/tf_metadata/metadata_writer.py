@@ -1,16 +1,16 @@
 import shutil
 import tempfile
 from pathlib import Path
-
-from tflite_support import flatbuffers
-from tflite_support import metadata as _metadata
-from tflite_support import metadata_schema_py_generated as _metadata_fb
 from typing import List
 
-from helpers.constants import FULLINT8, LABELS_NAME, SEGMENTATION
 from tf_metadata.input_metadata_writer import InputMetadataWriter
 from tf_metadata.output_metadata_writer import OutputMetadataWriter
 from tf_utils.parameters import ModelParameters
+from tflite_support import flatbuffers
+from tflite_support import metadata as _metadata
+from tflite_support import metadata_schema_py_generated as _metadata_fb
+
+from helpers.constants import FULLINT8, LABELS_NAME, SEGMENTATION
 
 
 class MetadataWriter:
@@ -48,7 +48,7 @@ class MetadataWriter:
         # Input
         self.model_type = model_parameters.model_type
         self.include_threshold = model_parameters.include_threshold
-        self.img_size = model_parameters.img_size
+        self.input_resolution = model_parameters.input_resolution
         self.include_normalization = model_parameters.include_normalization
         self.quantized = quantized
         # Output
@@ -65,7 +65,7 @@ class MetadataWriter:
         self.__create_model_info()
 
         try:
-            input_writer = InputMetadataWriter(self.input_order, self.img_size, self.include_normalization,
+            input_writer = InputMetadataWriter(self.input_order, self.input_resolution, self.include_normalization,
                                                quantized=self.quantized == FULLINT8 and not self.include_nms,
                                                multiple_inputs=not self.include_threshold and self.include_nms)
             self.input_meta = input_writer.write()

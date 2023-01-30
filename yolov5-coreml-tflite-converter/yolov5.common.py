@@ -33,7 +33,8 @@ from utils.general import (LOGGER, ROOT, Profile, check_requirements, check_suff
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import copy_attr, smart_inference_mode
 
-#YOLOV7
+
+# YOLOV7
 class MP(nn.Module):
     def __init__(self, k=2):
         super(MP, self).__init__()
@@ -59,18 +60,20 @@ class ReOrg(nn.Module):
     def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
         return torch.cat([x[..., ::2, ::2], x[..., 1::2, ::2], x[..., ::2, 1::2], x[..., 1::2, 1::2]], 1)
 
+
 class DownC(nn.Module):
     # Spatial pyramid pooling layer used in YOLOv3-SPP
     def __init__(self, c1, c2, n=1, k=2):
         super(DownC, self).__init__()
         c_ = int(c1)  # hidden channels
         self.cv1 = Conv(c1, c_, 1, 1)
-        self.cv2 = Conv(c_, c2//2, 3, k)
-        self.cv3 = Conv(c1, c2//2, 1, 1)
+        self.cv2 = Conv(c_, c2 // 2, 3, k)
+        self.cv3 = Conv(c1, c2 // 2, 1, 1)
         self.mp = nn.MaxPool2d(kernel_size=k, stride=k)
 
     def forward(self, x):
         return torch.cat((self.cv2(self.cv1(x)), self.cv3(self.mp(x))), dim=1)
+
 
 class SPPCSPC(nn.Module):
     # CSP https://github.com/WongKinYiu/CrossStagePartialNetworks
@@ -92,7 +95,8 @@ class SPPCSPC(nn.Module):
         y2 = self.cv2(x)
         return self.cv7(torch.cat((y1, y2), dim=1))
 
-#YOLOV5
+
+# YOLOV5
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     # Pad to 'same' shape outputs
     if d > 1:
@@ -120,6 +124,7 @@ class Conv(nn.Module):
 
     def forward_fuse(self, x):
         return self.act(self.conv(x))
+
 
 class DWConv(Conv):
     # Depth-wise convolution

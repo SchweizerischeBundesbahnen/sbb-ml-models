@@ -2,7 +2,6 @@ import cv2
 
 from helpers.coordinates import scale_coords_yolo, pt_yxyx2xyxy
 from utils.plots import Annotator, Colors
-import torch.nn.functional as F
 
 WHITE_COLOR = (225, 255, 255)
 
@@ -53,6 +52,7 @@ def plot_masks(img_size, img_origs, yxyxs, classes, scores, masks, nb_detecteds,
         label_score = label + f' {score[j]:0.3}'
         annotator.box_label(xyxy, label_score, colors(int(classe[j])))
     return img_orig
+
 
 def plot_boxes_xywh(img_origs, xywhs, classes, scores, nb_detecteds, labels):
     # xy top left (i.e. coco format) - coordinates of original images

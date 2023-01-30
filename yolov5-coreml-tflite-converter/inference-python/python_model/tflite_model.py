@@ -92,12 +92,10 @@ class TFLiteModel:
             nb_detected = interpreter.get_tensor(output_details[output_order.index(NUMBER_NAME)]['index'])
 
             if MASKS_NAME in output_order:
-                import torch
-                masks = torch.Tensor(interpreter.get_tensor(output_details[output_order.index(MASKS_NAME)]['index']))
-                masks = F.interpolate(masks[None], self.img_size, mode='bilinear', align_corners=False)[0]  # CHW
-                return yxyx, classes, scores, masks.gt_(0.5).numpy(), nb_detected
+                masks = interpreter.get_tensor(output_details[output_order.index(MASKS_NAME)]['index'])
+                return [yxyx], [classes], [scores], masks, nb_detected
 
-        return yxyx, classes, scores, None, nb_detected
+        return [yxyx], [classes], [scores], None, nb_detected
 
     def __load_labels(self):
         associated_files = self.metadata_displayer.get_packed_associated_file_list()

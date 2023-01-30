@@ -10,10 +10,8 @@ Export:
     $ python path/to/export.py --weights yolov5s.pt --include saved_model pb tflite tfjs
 """
 
-import argparse
 import logging
 import sys
-from copy import deepcopy
 from pathlib import Path
 
 FILE = Path(__file__).resolve()
@@ -22,17 +20,16 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 # ROOT = ROOT.relative_to(Path.cwd())  # relative
 
-import numpy as np
 import tensorflow as tf
-import torch
 import torch.nn as nn
 from tensorflow import keras
 
 # Add TFSPPF layer
-from models.common import Conv, Bottleneck, SPP, SPPF, DWConv, Focus, BottleneckCSP, Concat, autopad, C3, ReOrg, DownC, SPPCSPC, MP, SP
-from models.experimental import MixConv2d, attempt_load
+from models.common import Conv, Bottleneck, SPP, SPPF, DWConv, Focus, BottleneckCSP, Concat, autopad, C3, DownC, \
+    SPPCSPC
+from models.experimental import MixConv2d
 from models.yolo import Detect, Segment
-from utils.general import make_divisible, print_args, set_logging
+from utils.general import make_divisible
 from utils.activations import SiLU
 
 LOGGER = logging.getLogger(__name__)
@@ -298,7 +295,7 @@ class TFDetect(keras.layers.Layer):
                 # Normalize xywh to 0-1 to reduce calibration error
                 xy /= tf.constant([[self.imgsz[1], self.imgsz[0]]], dtype=tf.float32)
                 wh /= tf.constant([[self.imgsz[1], self.imgsz[0]]], dtype=tf.float32)
-                y = tf.concat([xy, wh, tf.sigmoid(x[i][..., 4:self.nc+5]), x[i][..., self.nc+5:]], -1)
+                y = tf.concat([xy, wh, tf.sigmoid(x[i][..., 4:self.nc + 5]), x[i][..., self.nc + 5:]], -1)
             else:
                 y = tf.sigmoid(x[i])
                 xy = (y[..., 0:2] * 2. - 0.5 + self.grid[i]) * self.stride[i]  # xy
@@ -309,7 +306,7 @@ class TFDetect(keras.layers.Layer):
                 y = tf.concat([xy, wh, y[..., 4:]], -1)
             z.append(tf.reshape(y, [-1, 3 * ny * nx, self.no]))
 
-        return tf.concat(z, 1), x
+        return tf.concat(z, 1)
 
     @staticmethod
     def _make_grid(nx=20, ny=20):
@@ -333,11 +330,11 @@ class TFSegment(TFDetect):
     def call(self, inputs):
         p = self.proto(inputs[0])
         x = self.detect(self, inputs)
-        return x[0], p
+        return x, p
 
 
 class TFProto(keras.layers.Layer):
-    def __init__(self, c1, c_=256, c2=32, w=None): # ch_in, number of protos, number of masks
+    def __init__(self, c1, c_=256, c2=32, w=None):  # ch_in, number of protos, number of masks
         super(TFProto, self).__init__()
         self.cv1 = TFConv(c1, c_, k=3, w=w.cv1)
         self.upsample = TFUpsample(None, scale_factor=2, mode='nearest')
@@ -352,7 +349,8 @@ class TFUpsample(keras.layers.Layer):
     def __init__(self, size, scale_factor, mode, w=None):  # warning: all arguments needed including 'w'
         super(TFUpsample, self).__init__()
         assert scale_factor == 2, "scale_factor must be 2"
-        self.upsample = tf.keras.layers.UpSampling2D(size=(scale_factor, scale_factor), interpolation=mode)#lambda x: tf.image.resize(x, (x.shape[1] * 2, x.shape[2] * 2), method=mode)
+        self.upsample = tf.keras.layers.UpSampling2D(size=(scale_factor, scale_factor),
+                                                     interpolation=mode)  # lambda x: tf.image.resize(x, (x.shape[1] * 2, x.shape[2] * 2), method=mode)
         # self.upsample = keras.layers.UpSampling2D(size=scale_factor, interpolation=mode)
         # with default arguments: align_corners=False, half_pixel_centers=False
         # self.upsample = lambda x: tf.raw_ops.ResizeNearestNeighbor(images=x,

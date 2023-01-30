@@ -1,10 +1,11 @@
 import os
-
-from tflite_support import metadata_schema_py_generated as _metadata_fb
 from typing import List
 
-from helpers.constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, PREDICTIONS_NAME, MASKS_NAME
 from tf_metadata.metadata_utils import MetadataHelper
+from tflite_support import metadata_schema_py_generated as _metadata_fb
+
+from helpers.constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, \
+    PREDICTIONS_NAME, MASKS_NAME
 
 
 class OutputMetadataWriter(MetadataHelper):
@@ -27,14 +28,16 @@ class OutputMetadataWriter(MetadataHelper):
     multiple_outputs: bool
         Whether the model has several outputs
     """
-    def __init__(self, output_order: List[str], labels_path:str, nb_labels:int, max_det:int, multiple_outputs:bool=False):
+
+    def __init__(self, output_order: List[str], labels_path: str, nb_labels: int, max_det: int,
+                 multiple_outputs: bool = False):
         self.output_order = output_order
         self.labels_path = labels_path
         self.nb_labels = nb_labels
         self.max_det = max_det
         self.multiple_outputs = multiple_outputs
 
-    def write(self):
+    def write(self) -> (List[_metadata_fb.TensorMetadataT], List[_metadata_fb.TensorGroupT]):
         """ Write the output metadata """
         if self.multiple_outputs:
             # 4 for detections, 5 for segmentations

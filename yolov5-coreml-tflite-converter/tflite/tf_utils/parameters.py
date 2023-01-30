@@ -2,7 +2,7 @@ from typing import List
 
 from helpers.constants import DEFAULT_INPUT_RESOLUTION, DEFAULT_SOURCE_DATASET, DEFAULT_NB_CALIBRATION, \
     DEFAULT_MAX_NUMBER_DETECTION, FLOAT32, FLOAT16, INT8, \
-    FULLINT8, BAHNHOF, WAGEN, TRAKTION, TFLITE, SAVED_MODEL, PADDED, SIMPLE, COMBINED, DETECTION, SEGMENTATION
+    FULLINT8, BAHNHOF, WAGEN, TRAKTION, TFLITE, SAVED_MODEL, PADDED, SIMPLE, COMBINED, DETECTION, SEGMENTATION, UNKNOWN
 
 
 class ModelParameters:
@@ -13,8 +13,8 @@ class ModelParameters:
     model_type: str
         The model type, either `detection` or `segmentation`
 
-    img_size: (int, int)
-        The input size
+    input_resolution: int
+        The input resolution
 
     include_nms: bool
         Whether to include NMS in the model
@@ -28,19 +28,19 @@ class ModelParameters:
     nb_classes: int
         The number of classes detected by the model
     """
-    def __init__(self, model_type: str = DETECTION,
-                 img_size: (int, int) = (DEFAULT_INPUT_RESOLUTION, DEFAULT_INPUT_RESOLUTION),
+
+    def __init__(self, model_type: str = UNKNOWN,
+                 input_resolution: int = DEFAULT_INPUT_RESOLUTION,
                  include_nms: bool = True,
                  include_normalization: bool = True,
                  include_threshold: bool = False,
                  nb_classes: int = -1):
         self.model_type = model_type
-        if model_type not in [DETECTION, SEGMENTATION]:
+        if model_type not in [UNKNOWN, DETECTION, SEGMENTATION]:
             raise ValueError(
                 f"The model type: '{model_type}' is not supported. Needs to bo one of '{DETECTION}', '{SEGMENTATION}'.")
 
-        img_size = img_size * 2 if len(img_size) == 1 else img_size  # expand
-        self.img_size = img_size
+        self.input_resolution = input_resolution
         self.include_nms = include_nms
         self.include_normalization = include_normalization
         self.include_threshold = include_threshold
@@ -67,6 +67,7 @@ class ConversionParameters:
     source: str
         The source for the representative dataset if any (`bahnhof`, `wagen`, `traktion`)
     """
+
     def __init__(self, dest: str = TFLITE,
                  quantization_types: List[str] = None,
                  write_metadata: bool = True,
@@ -104,6 +105,7 @@ class PostprocessingParameters:
     nms_type: str
         The type of NMS to use if NMS is included (`simple`, `padded`, `combined`)
     """
+
     def __init__(self, max_det: int = DEFAULT_MAX_NUMBER_DETECTION,
                  nms_type: str = PADDED):
         self.max_det = max_det

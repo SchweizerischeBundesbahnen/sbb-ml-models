@@ -30,7 +30,8 @@ if __name__ == '__main__':
                         help="The path to the directory that contains the converted models.")
     parser.add_argument('--img-dir', required=True, type=str,
                         help="The path to the directory containing the images")
-    parser.add_argument('--verbose', action='store_true', help="If set, will print predictions and results for all classes.")
+    parser.add_argument('--verbose', action='store_true',
+                        help="If set, will print predictions and results for all classes.")
 
     opt = parser.parse_args()
 

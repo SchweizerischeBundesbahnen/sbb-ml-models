@@ -1,15 +1,15 @@
-import argparse
 import logging
 from pathlib import Path
 
-import cv2
+import logging
+from pathlib import Path
+
 import numpy as np
 import torch
 
-from helpers.constants import RED, END_COLOR, BLUE, DEFAULT_DETECTED_IMAGE_DIR, PURPLE, BOLD, GREEN
-from helpers.coordinates import pt_yxyx2xyxy
 from detect import Detector, get_counter_detections
-from python_utils.plots import plot_boxes
+from helpers.constants import RED, END_COLOR, BLUE, PURPLE, BOLD, GREEN
+from helpers.coordinates import pt_yxyx2xyxy
 from utils.dataloaders import LoadImages
 from utils.metrics import ap_per_class
 from val import process_batch
@@ -42,10 +42,10 @@ class ComparisonTest:
     def __run_inference(self, i, img_path, img, reference_img):
         img = torch.from_numpy(img)
         reference_img = torch.from_numpy(reference_img)
-        yxyx, classes, scores, nb_detected, inference_time = self.detector.detect_image(img)
+        yxyx, classes, scores, _, nb_detected, inference_time = self.detector.detect_image(img)
         xyxy = pt_yxyx2xyxy(yxyx)
 
-        reference_yxyx, reference_classes, reference_scores, reference_nb_detected, reference_inference_time = self.detector.detect_image(
+        reference_yxyx, reference_classes, reference_scores, _, reference_nb_detected, reference_inference_time = self.detector.detect_image(
             reference_img)
         reference_xyxy = pt_yxyx2xyxy(yxyx)
 

@@ -1,10 +1,10 @@
 import tensorflow as tf
+from tf_utils.parameters import PostprocessingParameters
 
 from helpers.constants import WH_SLICE, SCORE_SLICE, CLASSES_SLICE, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, \
     SIMPLE, \
     PADDED, COMBINED
 from helpers.coordinates import tf_xywh2yxyx_yolo
-from tf_utils.parameters import PostprocessingParameters
 
 
 class NMS:
@@ -49,7 +49,7 @@ class NMS:
                 outputs = self.__nms_simple(image_predictions, nc)
                 return outputs
 
-    def compute_with_masks(self, model_output, nc: int):
+    def compute_with_masks(self, model_output, nc: int, input_resolution: int):
         """ Compute NMS for segmentation
 
         Parameters
@@ -62,7 +62,6 @@ class NMS:
         """
         predictions = model_output[0]
         protos = model_output[1]
-        # NMS combined does not work for segmentation at the moment
         yxyx, classes, scores, nb_detected = self.__nms_simple(predictions[0], nc)
 
         masks = predictions[0][..., CLASSES_SLICE[0] + nc:]
@@ -90,12 +89,20 @@ class NMS:
         # crop mask
         r = tf.reshape(tf.range(mw, dtype=y1.dtype), (1, 1, mw))
         c = tf.reshape(tf.range(mw, dtype=y1.dtype), (1, mh, 1))
+        # (nb_det, 1, mw)
         crop_mask1 = tf.math.multiply(tf.cast(tf.greater_equal(r, x1), dtype=y1.dtype),
                                       tf.cast(tf.less(r, x2), dtype=y1.dtype))
+        # (nb_det, mh, 1)
         crop_mask2 = tf.math.multiply(tf.cast(tf.greater_equal(c, y1), dtype=y1.dtype),
                                       tf.cast(tf.less(c, y2), dtype=y1.dtype))
+        # (nb_det, mh, mw)
         crop_mask = tf.math.multiply(crop_mask1, crop_mask2)
         masks = tf.math.multiply(masks, crop_mask)
+
+        masks = tf.expand_dims(masks, axis=3)
+        masks = tf.image.resize(masks, (input_resolution, input_resolution))
+        masks = tf.clip_by_value(masks, clip_value_min=0.5, clip_value_max=1)
+        masks = tf.squeeze(masks, axis=3)
 
         return yxyx, classes, scores, masks, nb_detected
 
@@ -156,7 +163,7 @@ class NMS:
             classes = classes[:nb_detected]
             scores = scores[:nb_detected]
 
-        # Get the right output shape (1, d, 4), (1, d), (1, d), (1, d, 32), (1,)
+        # Get the right output shape (1, d, 4), (1, d), (1, d), (1,)
         yxyx = tf.expand_dims(yxyx, axis=0)
         classes = tf.expand_dims(classes, axis=0)
         scores = tf.expand_dims(scores, axis=0)

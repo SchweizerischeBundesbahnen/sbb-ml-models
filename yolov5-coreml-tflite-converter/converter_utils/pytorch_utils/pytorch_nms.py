@@ -62,7 +62,6 @@ class YoloNMS(nn.Module):
             scores = scores.reshape(scores.shape[0])
             classes = classes.reshape(classes.shape[0]).float()
             masks = image_predictions[..., CLASSES_SLICE[0]+self.nc:]
-
             # nms = torch
             nms = torchvision.ops.nms(yxyx, scores, iou_threshold=self.iou_thres)
             # if nms.shape[0] > self.max_det:

@@ -8,7 +8,6 @@ import PIL
 import cv2
 import numpy as np
 import torch
-from utils.dataloaders import LoadImages
 
 from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DEFAULT_DETECTED_IMAGE_DIR, \
     DEFAULT_INPUT_RESOLUTION, RED, BLUE, END_COLOR, NORMALIZATION_FACTOR
@@ -16,6 +15,7 @@ from python_model.coreml_model import CoreMLModel
 from python_model.pytorch_model import PyTorchModel
 from python_model.tflite_model import TFLiteModel
 from python_utils.plots import plot_boxes, plot_masks
+from utils.dataloaders import LoadImages
 
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']
 
@@ -131,8 +131,9 @@ class Detector:
 
                 img = torch.from_numpy(img)
 
-                yxyx, classes, scores, masks, nb_detected, inference_time = self.detect_image(img, iou_threshold=iou_threshold,
-                                                                                       conf_threshold=conf_threshold)
+                yxyx, classes, scores, masks, nb_detected, inference_time = self.detect_image(img,
+                                                                                              iou_threshold=iou_threshold,
+                                                                                              conf_threshold=conf_threshold)
 
                 end_time = time.time()
                 inference_times.append(inference_time)
@@ -140,13 +141,16 @@ class Detector:
                 # Plot the bounding box
                 if save_img or return_image:
                     if masks is None:
-                        img_annotated = plot_boxes(self.img_size, [img_orig], yxyx, classes, scores, nb_detected, self.labels)
+                        img_annotated = plot_boxes(self.img_size, [img_orig], yxyx, classes, scores, nb_detected,
+                                                   self.labels)
                     else:
-                        img_annotated = plot_masks(self.img_size, [img_orig], yxyx, classes, scores, masks, nb_detected, self.labels)
+                        img_annotated = plot_masks(self.img_size, [img_orig], yxyx, classes, scores, masks, nb_detected,
+                                                   self.labels)
                 end_plot_time = time.time()
 
                 # Save the results
-                out_path_img = str(out_path / f"{self.prefix}_{img_name.rsplit('.')[0]}_boxes_{self.model_name.rsplit('.')[0]}.png")
+                out_path_img = str(
+                    out_path / f"{self.prefix}_{img_name.rsplit('.')[0]}_boxes_{self.model_name.rsplit('.')[0]}.png")
                 if save_img:
                     cv2.imwrite(out_path_img, img_annotated)
                 if return_image:
