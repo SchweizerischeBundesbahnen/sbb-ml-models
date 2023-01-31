@@ -1,6 +1,6 @@
 import logging
 
-import coremltools as ct
+from coremltools.proto import Model_pb2
 
 from helpers.constants import CONFIDENCE_NAME, COORDINATES_NAME, RAW_PREFIX, IOU_NAME, CONF_NAME, DEFAULT_IOU_THRESHOLD, \
     DEFAULT_CONF_THRESHOLD, \
@@ -19,7 +19,7 @@ class NMSModelSpecGenerator:
     def __init__(self, model):
         self.model = model
 
-    def generate(self, builder_spec):
+    def generate(self, builder_spec) -> Model_pb2:
         """ Create a coreml model with nms to filter the results of the model
 
         Parameters
@@ -34,7 +34,7 @@ class NMSModelSpecGenerator:
 
         """
         logging.info(f"{BLUE}Creating CoreML NMS model...{END_COLOR}")
-        nms_spec = ct.proto.Model_pb2.Model()
+        nms_spec = Model_pb2.Model()
         nms_spec.specificationVersion = 4
 
         # Define input and outputs of the model

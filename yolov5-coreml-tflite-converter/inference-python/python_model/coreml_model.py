@@ -8,7 +8,14 @@ from helpers.constants import BATCH_SIZE, IMAGE_NAME, IOU_NAME, CONF_NAME, CONFI
 from pytorch_utils.pytorch_nms import pt_xywh2yxyx_yolo
 
 
-class CoreMLModel():
+class CoreMLModel:
+    """ Class to load a CoreML model and run inference
+
+    Attributes
+    ----------
+    model_path: str
+        The path to the CoremL model
+    """
     def __init__(self, model_path):
         logging.info("- Initializing CoreML model...")
         self.model = MLModel(model_path)
@@ -32,7 +39,37 @@ class CoreMLModel():
         logging.info(f"- The image is of size {self.img_size}.")
         logging.info(f"- It has {len(output_details)} output{'s' if len(output_details) > 1 else ''}: {output_name}")
 
+    def get_input_info(self):
+        """
+        Returns the information about the input
+
+        Returns
+        ----------
+        normalized, img size, batch size, PIL image, channel first
+            Information about the input
+        """
+        return False, self.img_size, BATCH_SIZE, True, False
+
     def predict(self, img, iou_threshold, conf_threshold):
+        """
+        Runs the inference
+
+        Parameters
+        ----------
+        img: PIL.Image
+            The input image
+
+        iou_threshold: float
+            The IoU threshold
+
+        conf_threshold: float
+            The confidence threshold
+
+        Returns
+        ----------
+        yxyx, classes, scores, masks, nb_detected
+            The detections made by the model
+        """
         try:
             predictions = self.model.predict(
                 {IMAGE_NAME: img, IOU_NAME: iou_threshold, CONF_NAME: conf_threshold})
@@ -55,9 +92,3 @@ class CoreMLModel():
             masks = None
 
         return yxyx.unsqueeze(0), classes.unsqueeze(0), scores.unsqueeze(0), masks, torch.Tensor([nb_detected])
-
-    def get_labels(self):
-        return self.labels
-
-    def get_input_info(self):
-        return False, self.img_size, BATCH_SIZE, True, False  # Normalized, img size, batch size, PIL image, channel first

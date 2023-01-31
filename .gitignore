@@ -13,5 +13,5 @@ Jenkinsfile
 convert_model.sh
 test_model.sh
 
-Tflite-support/
+tflite-support/
 yolov5/

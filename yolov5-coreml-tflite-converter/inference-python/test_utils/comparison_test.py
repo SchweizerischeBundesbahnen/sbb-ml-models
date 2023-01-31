@@ -1,90 +1,76 @@
 import logging
 from pathlib import Path
 
-import logging
-from pathlib import Path
-
 import numpy as np
 import torch
 
 from detect import Detector, get_counter_detections
 from helpers.constants import RED, END_COLOR, BLUE, PURPLE, BOLD, GREEN
-from helpers.coordinates import pt_yxyx2xyxy
+from helpers.coordinates import pt_yxyx2xyxy_yolo
 from utils.dataloaders import LoadImages
 from utils.metrics import ap_per_class
 from val import process_batch
 
 
 class ComparisonTest:
+    """ Class to run a comparison tests between models
+
+    Attributes
+    ----------
+    reference_model_path: str
+        The path to the reference model
+
+    data_path: str
+        The path to the folder with test images
+    """
+
     def __init__(self, reference_model_path, data_path):
         logging.basicConfig(format='%(asctime)s %(message)s', datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
         self.data_path = data_path
         self.reference_model_path = reference_model_path
 
+        logging.info(f"{PURPLE}{BOLD}Loading reference model: {reference_model_path}{END_COLOR}")
+        self.reference_detector = Detector(self.reference_model_path)
+
         if not Path(self.data_path).exists():
-            print(f"{RED}Data directory not found:{END_COLOR} '{self.data_path}'")
+            logging.info(f"{RED}Data directory not found:{END_COLOR} '{self.data_path}'")
             exit(1)
 
         if not Path(self.reference_model_path).exists():
-            print(f"{RED}Model not found:{END_COLOR} '{self.reference_model_path}'")
+            logging.info(f"{RED}Model not found:{END_COLOR} '{self.reference_model_path}'")
             exit(1)
 
-    def __check_classes(self, reference_class_labels, class_labels):
-        if len(class_labels) != len(reference_class_labels):
-            raise ValueError(
-                f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes. {reference_class_labels} != {class_labels}")
-        else:
-            for c in class_labels:
-                if c not in reference_class_labels:
-                    raise ValueError(
-                        f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes.")
-
-    def __run_inference(self, i, img_path, img, reference_img):
-        img = torch.from_numpy(img)
-        reference_img = torch.from_numpy(reference_img)
-        yxyx, classes, scores, _, nb_detected, inference_time = self.detector.detect_image(img)
-        xyxy = pt_yxyx2xyxy(yxyx)
-
-        reference_yxyx, reference_classes, reference_scores, _, reference_nb_detected, reference_inference_time = self.detector.detect_image(
-            reference_img)
-        reference_xyxy = pt_yxyx2xyxy(yxyx)
-
-        if self.verbose:
-            image_name = Path(img_path).name
-            counter = get_counter_detections(self.class_labels, classes, nb_detected)
-            reference_counter = get_counter_detections(self.class_labels, reference_classes, reference_nb_detected)
-            self.display_detections(i, counter, reference_counter, image_name)
-
-        # Consider each image
-        for i in range(self.detector.batch_size):
-            self.seen += 1
-
-            # Compared model result (Nx6)
-            predn = torch.cat([xyxy[i], scores[i].unsqueeze(1), classes[i].unsqueeze(1)], dim=1)
-            # Reference model result (Nx6)
-            reference_predn = torch.cat([reference_classes[i].unsqueeze(1), reference_xyxy[i]], dim=1)
-
-            self.inference_time[0].append(inference_time)
-            self.inference_time[1].append(reference_inference_time)
-
-            correct = process_batch(predn, reference_predn, self.iouv)
-            self.stats.append((correct, predn[:, 4], predn[:, 5], reference_predn[:, 0]))
-
     def run_test(self, compared_model_path, verbose=False):
+        """
+        Runs the inference
+
+        Parameters
+        ----------
+        compared_model_path: float
+            The path to the compared model
+
+        verbose: bool
+            Whether to display all predictions
+
+        Returns
+        ----------
+        yxyx, classes, scores, masks, nb_detected
+            The detections made by the model
+        """
         if not Path(compared_model_path).exists():
-            print(f"{RED}Converted model not found:{END_COLOR} '{compared_model_path}'")
+            logging.info(f"{RED}Converted model not found:{END_COLOR} '{compared_model_path}'")
             exit(1)
         self.verbose = verbose
         self.compared_model_path = compared_model_path
 
         logging.info(f"{PURPLE}{BOLD}Testing model: {compared_model_path}{END_COLOR}")
-        self.reference_detector = Detector(self.reference_model_path)
         self.detector = Detector(compared_model_path)
 
         # The reference and compared model should consider the same classes
         self.__check_classes(self.reference_detector.labels, self.detector.labels)
         self.class_labels = self.detector.labels
 
+        # Load the test images
         dataset = LoadImages(self.data_path, img_size=self.detector.img_size, auto=False)
 
         self.stats = []
@@ -92,13 +78,13 @@ class ComparisonTest:
         self.iouv = torch.linspace(0.5, 0.95, 10)
         self.seen = 0
 
+        # If the don't consider the same image size, add a reference dataset
         if self.reference_detector.img_size != self.detector.img_size:
             reference_dataset = LoadImages(self.data_path, img_size=self.reference_detector.img_size, auto=False)
             for i, ((img_path, img, img_orig, _, _), (_, reference_img, _, _, _)) in enumerate(
                     zip(dataset, reference_dataset)):
                 self.__run_inference(i, img_path, img, reference_img)
         else:
-            dataset = LoadImages(self.data_path, img_size=self.detector.img_size, auto=False)
             for i, (img_path, img, img_orig, _, _) in enumerate(dataset):
                 self.__run_inference(i, img_path, img, img)
 
@@ -110,6 +96,7 @@ class ComparisonTest:
         logging.info(f"Average inference time (converted model): {BOLD}{ct:.3}s{END_COLOR}")
         logging.info(f"Average inference time (reference model): {rt:.3}s")
 
+        # Compute stats
         map_threshold = 0.6
         success = True
         stat = [np.concatenate(x, 0) for x in zip(*self.stats)]
@@ -141,7 +128,49 @@ class ComparisonTest:
             logging.info(f"{RED}Test failure:{END_COLOR} the converted model is not good enough.")
 
     @staticmethod
-    def display_detections(i, detection, reference_detection, image_name):
+    def __check_classes(reference_class_labels, class_labels):
+        if len(class_labels) != len(reference_class_labels):
+            raise ValueError(
+                f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes. {reference_class_labels} != {class_labels}")
+        else:
+            for c in class_labels:
+                if c not in reference_class_labels:
+                    raise ValueError(
+                        f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes.")
+
+    def __run_inference(self, i, img_path, img, reference_img):
+        img = torch.from_numpy(img)
+        reference_img = torch.from_numpy(reference_img)
+        yxyx, classes, scores, _, nb_detected, inference_time = self.detector.detect_image(img)
+        xyxy = pt_yxyx2xyxy_yolo(yxyx)
+
+        reference_yxyx, reference_classes, reference_scores, _, reference_nb_detected, reference_inference_time = self.detector.detect_image(
+            reference_img)
+        reference_xyxy = pt_yxyx2xyxy_yolo(yxyx)
+
+        if self.verbose:
+            image_name = Path(img_path).name
+            counter = get_counter_detections(self.class_labels, classes, nb_detected)
+            reference_counter = get_counter_detections(self.class_labels, reference_classes, reference_nb_detected)
+            self.__display_detections(i, counter, reference_counter, image_name)
+
+        # Consider each image
+        for i in range(self.detector.batch_size):
+            self.seen += 1
+
+            # Compared model result (Nx6)
+            predn = torch.cat([xyxy[i], scores[i].unsqueeze(1), classes[i].unsqueeze(1)], dim=1)
+            # Reference model result (Nx6)
+            reference_predn = torch.cat([reference_classes[i].unsqueeze(1), reference_xyxy[i]], dim=1)
+
+            self.inference_time[0].append(inference_time)
+            self.inference_time[1].append(reference_inference_time)
+
+            correct = process_batch(predn, reference_predn, self.iouv)
+            self.stats.append((correct, predn[:, 4], predn[:, 5], reference_predn[:, 0]))
+
+    @staticmethod
+    def __display_detections(i, detection, reference_detection, image_name):
         logging.info(f"{BLUE}Image {i + 1}:{END_COLOR} ({image_name})")
         logging.info(f"{f'{BOLD}Compared model{END_COLOR}':40}{f'{BOLD}Reference model{END_COLOR}'}")
         logging.info(

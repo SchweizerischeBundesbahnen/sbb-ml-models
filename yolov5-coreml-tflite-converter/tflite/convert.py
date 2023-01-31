@@ -22,18 +22,14 @@ optional arguments:
                         The resolution of the input images, e.g. 640 means input resolution is 640x640. Default: 640
   --quantize-model QUANTIZATION_TYPES [QUANTIZATION_TYPES ...]
                         Quantization: 'int8', 'float16' or 'float32' for no quantization. Default: [float32]
-  --no-nms              If set, the converted model does not include the postprocessing (NMS)
-  --no-normalization    If set, the converted model does not include the preprocessing (normalization)
   --max-det MAX_DET     The maximum number of detections. Default: 20.
-  --nms-type NMS_TYPE   NMS algorithm used: one of 'simple', 'padded', 'combined'.
   ```
 """
 
 import argparse
 
 from helpers.constants import DEFAULT_MODEL_OUTPUT_DIR, DEFAULT_TFLITE_NAME, DEFAULT_INPUT_RESOLUTION, \
-    DEFAULT_QUANTIZATION_TYPE, DEFAULT_MAX_NUMBER_DETECTION, SIMPLE, PADDED, \
-    COMBINED
+    DEFAULT_QUANTIZATION_TYPE, DEFAULT_MAX_NUMBER_DETECTION
 from tf_converter.pytorch_to_tf_converter import PytorchToTFConverter
 from tf_utils.parameters import ModelParameters, ConversionParameters, PostprocessingParameters
 
@@ -52,26 +48,15 @@ def main():
                         help=f'The resolution of the input images, e.g. {DEFAULT_INPUT_RESOLUTION} means input resolution is {DEFAULT_INPUT_RESOLUTION}x{DEFAULT_INPUT_RESOLUTION}. Default: {DEFAULT_INPUT_RESOLUTION}')  # height, width
     parser.add_argument('--quantize-model', nargs='+', dest='quantization_types', default=[DEFAULT_QUANTIZATION_TYPE],
                         help=f"Quantization: 'int8', 'float16' or 'float32' for no quantization. Default: [{DEFAULT_QUANTIZATION_TYPE}]")
-
-    # Optional parameters
-    parser.add_argument('--no-nms', action='store_true',
-                        help='If set, the converted model does not include the postprocessing (NMS)')
-    parser.add_argument('--no-normalization', action='store_true',
-                        help='If set, the converted model does not include the preprocessing (normalization)')
-
     parser.add_argument('--max-det', type=int, default=DEFAULT_MAX_NUMBER_DETECTION,
                         help=f'The maximum number of detections. Default: {DEFAULT_MAX_NUMBER_DETECTION}.')
-    parser.add_argument('--nms-type', default=PADDED,
-                        help=f"NMS algorithm used: one of '{SIMPLE}', '{PADDED}', '{COMBINED}'.")
 
     opt = parser.parse_args()
 
-    model_parameters = ModelParameters(input_resolution=opt.input_resolution,
-                                       include_nms=not opt.no_nms,
-                                       include_normalization=not opt.no_normalization)
+    model_parameters = ModelParameters(input_resolution=opt.input_resolution)
 
     conversion_parameters = ConversionParameters(quantization_types=opt.quantization_types)
-    postprocessing_parameters = PostprocessingParameters(max_det=opt.max_det, nms_type=opt.nms_type)
+    postprocessing_parameters = PostprocessingParameters(max_det=opt.max_det)
 
     converter = PytorchToTFConverter(model_input_path=opt.model_input_path,
                                      model_output_directory=opt.model_output_directory,

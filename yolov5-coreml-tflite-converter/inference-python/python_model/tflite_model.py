@@ -3,15 +3,23 @@ import logging
 
 import numpy as np
 import tensorflow as tf
+from tf_model.tf_nms import NMS
+from tf_utils.parameters import PostprocessingParameters
 from tflite_support import metadata as _metadata
 
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, BOUNDINGBOX_NAME, \
     CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, SIMPLE, MASKS_NAME
-from tf_model.tf_nms import NMS
-from tf_utils.parameters import PostprocessingParameters
-import torch.nn.functional as F
+
 
 class TFLiteModel:
+    """ Class to load a TFLite model and run inference
+
+    Attributes
+    ----------
+    model_path: str
+        The path to the TFLite model
+    """
+
     def __init__(self, model_path):
         logging.info("- Initializing TFLite model...")
         self.metadata_displayer = _metadata.MetadataDisplayer.with_model_file(model_path)
@@ -38,12 +46,36 @@ class TFLiteModel:
             f"- It has {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''}: {', '.join(self.output_order)}")
 
     def get_input_info(self):
+        """
+        Returns the information about the input
+
+        Returns
+        ----------
+        normalized, img size, batch size, PIL image, channel first
+            Information about the input
+        """
         return self.normalized_image, self.img_size, self.batch_size, False, False  # Normalized, img size, batch size, PIL image, channel first
 
-    def get_labels(self):
-        return self.labels
-
     def predict(self, img, iou_threshold, conf_threshold):
+        """
+        Runs the inference
+
+        Parameters
+        ----------
+        img: torch.Tensor
+            The input image
+
+        iou_threshold: float
+            The IoU threshold
+
+        conf_threshold: float
+            The confidence threshold
+
+        Returns
+        ----------
+        yxyx, classes, scores, masks, nb_detected
+            The detections made by the model
+        """
         # Run inference for each image in the directory
         interpreter = self.interpreter
         input_details = self.input_details
@@ -130,10 +162,10 @@ class TFLiteModel:
                     quantized_image = True
                     logging.info("- The model uses full integer quantization.")
 
+        # Read output order
         output_metadata = metadata['subgraph_metadata'][0]['output_tensor_metadata']
         output_order = [output['name'] for output in output_metadata]
         # Check the outputs
-
         if len(output_order) == 4:
             # Detection
             expected_output_name = [BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME]
