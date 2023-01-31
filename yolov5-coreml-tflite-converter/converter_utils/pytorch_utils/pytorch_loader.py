@@ -7,10 +7,34 @@ from models.yolo import Segment, Detect
 
 
 class PyTorchModelLoader:
+    """ Class to load the Yolo pytorch model
+
+    Attributes
+    ----------
+    model_input_path: str
+        The path to the pytorch model
+
+    input_resolution: int
+        The input resolution for the model
+    """
 
     def __init__(self, model_input_path, input_resolution=DEFAULT_INPUT_RESOLUTION):
         self.model_input_path = model_input_path
         self.input_resolution = input_resolution
+
+    def load(self, fuse=True):
+        """
+        Loads the pytorch model
+
+        Returns
+        ----------
+        self: PyTorchModelLoader
+            A wrapper for the pytorch model, with all useful information
+        """
+        self.__load_model(fuse)
+        self.__dry_run()
+        self.__load_attributes()
+        return self
 
     def __load_model(self, fuse):
         try:
@@ -42,9 +66,3 @@ class PyTorchModelLoader:
         else:
             raise ValueError(
                 f"Yolo model should end with either 'Segment' or 'Detect' not {type(self.torch_model.model[-1])}")
-
-    def load(self, fuse=True):
-        self.__load_model(fuse)
-        self.__dry_run()
-        self.__load_attributes()
-        return self

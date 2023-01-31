@@ -3,7 +3,7 @@ import torch
 
 
 def tf_xywh2yxyx_yolo(xywh):
-    # Convert nx4 boxes from [x, y, w, h] (x,y center) to [x1, y1, x2, y2] (xy1=top-left, xy2=bottom-right)
+    # Convert nx4 boxes from [x, y, w, h] (x,y center) to [y1, x1, y2, x2] (xy1=top-left, xy2=bottom-right)
     x, y, w, h = tf.split(xywh, num_or_size_splits=4, axis=-1)
     return tf.concat([y - h / 2, x - w / 2, y + h / 2, x + w / 2], axis=-1)
 
@@ -19,10 +19,21 @@ def pt_xywh2yxyx_yolo(xywh):
     return yxyx
 
 
+def pt_yxyx2xyxy_yolo(yxyx):
+    # Convert nx4 boxes [y1, x1, y2, x2] (xy1=top-left, xy2=bottom-right) to [x1, y1, x2, y2] (xy1=top-left, xy2=bottom-right)
+    yxyx = yxyx if isinstance(yxyx, torch.Tensor) else torch.from_numpy(yxyx)
+    xyxy = yxyx.clone()
+    xyxy[..., 0] = yxyx[..., 1]
+    xyxy[..., 1] = yxyx[..., 0]
+    xyxy[..., 2] = yxyx[..., 3]
+    xyxy[..., 3] = yxyx[..., 2]
+    return xyxy
+
+
 def pt_xywh2xyxy_yolo(xywh):
     # Convert nx4 boxes from [x, y, w, h] (x,y center) to [x1, y1, x2, y2] (xy1=top-left, xy2=bottom-right)
     yxyx = pt_xywh2yxyx_yolo(xywh)
-    xyxy = pt_yxyx2xyxy(yxyx)
+    xyxy = pt_yxyx2xyxy_yolo(yxyx)
     return xyxy
 
 
@@ -35,16 +46,6 @@ def pt_yxyx2xywh_coco(yxyx):
     y[..., 2] = torch.abs(yxyx[..., 3] - yxyx[..., 1])  # w = x2 - x1
     y[..., 3] = torch.abs(yxyx[..., 2] - yxyx[..., 0])  # h = y2 - y1
     return y
-
-
-def pt_yxyx2xyxy(yxyx):
-    yxyx = yxyx if isinstance(yxyx, torch.Tensor) else torch.from_numpy(yxyx)
-    xyxy = yxyx.clone()
-    xyxy[..., 0] = yxyx[..., 1]
-    xyxy[..., 1] = yxyx[..., 0]
-    xyxy[..., 2] = yxyx[..., 3]
-    xyxy[..., 3] = yxyx[..., 2]
-    return xyxy
 
 
 def pt_normalize_xywh(xywh, img):

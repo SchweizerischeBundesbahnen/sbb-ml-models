@@ -7,6 +7,29 @@ from helpers.coordinates import pt_xywh2yxyx_yolo
 
 
 class YoloNMS(nn.Module):
+    """ Class to add NMS to the Yolo model
+
+    Attributes
+    ----------
+    model: PyTorchModelLoader
+        The pytorch model
+
+    max_det: int
+        The maximum number of detections
+
+    iou_thres: float
+        The IoU threshold
+
+    conf_thres:
+        The confidence threshold
+
+    normalized: bool
+        If the input should be normalized prior to be fed to the model
+
+    nmsed: bool
+        If NMS should be applied to the output of the model
+    """
+
     def __init__(self, model, max_det=DEFAULT_MAX_NUMBER_DETECTION, iou_thres=DEFAULT_IOU_THRESHOLD,
                  conf_thres=DEFAULT_CONF_THRESHOLD, normalized=True, nmsed=True):
         super(YoloNMS, self).__init__()
@@ -20,6 +43,18 @@ class YoloNMS(nn.Module):
         self.nmsed = nmsed
 
     def forward(self, x):
+        """
+        Runs the inference
+
+        Parameters
+        ----------
+        x: torch.Tensor
+
+        Returns
+        ----------
+        yxyx, classes, scores, masks
+            The detections made by the model
+        """
         if self.normalized:
             # Normalize the input
             x /= NORMALIZATION_FACTOR
@@ -43,11 +78,11 @@ class YoloNMS(nn.Module):
         shape = images_predictions.shape
 
         if shape[1] > shape[2]:
-             return self.nms_yolov5(images_predictions), protos
+             return self.__nms_yolov5(images_predictions), protos
         else:
             raise NotImplementedError()
 
-    def nms_yolov5(self, images_predictions):
+    def __nms_yolov5(self, images_predictions):
         candidates = images_predictions[..., SCORE_SLICE[0]] > self.conf_thres
         for i, image_predictions in enumerate(images_predictions):
             image_predictions = image_predictions[candidates[i]]
@@ -62,9 +97,6 @@ class YoloNMS(nn.Module):
             scores = scores.reshape(scores.shape[0])
             classes = classes.reshape(classes.shape[0]).float()
             masks = image_predictions[..., CLASSES_SLICE[0]+self.nc:]
-            # nms = torch
             nms = torchvision.ops.nms(yxyx, scores, iou_threshold=self.iou_thres)
-            # if nms.shape[0] > self.max_det:
-            # nms = nms[:self.max_det]
 
             return yxyx[nms].unsqueeze(0), classes[nms].unsqueeze(0), scores[nms].unsqueeze(0), masks[nms].unsqueeze(0)

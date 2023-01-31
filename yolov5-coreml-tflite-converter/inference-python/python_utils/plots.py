@@ -1,6 +1,6 @@
 import cv2
 
-from helpers.coordinates import scale_coords_yolo, pt_yxyx2xyxy
+from helpers.coordinates import scale_coords_yolo, pt_yxyx2xyxy_yolo
 from utils.plots import Annotator, Colors
 
 WHITE_COLOR = (225, 255, 255)
@@ -17,12 +17,12 @@ def plot_boxes(img_size, img_origs, yxyxs, classes, scores, nb_detecteds, labels
     orig_h, orig_w = img_orig.shape[:2]
     yxyx = scale_coords_yolo(img_orig, img_size, yxyx)
 
-    # Plot bounding boxes
     line_thickness = int(round(0.0005 * (orig_h + orig_w) / 2) + 1)
     annotator = Annotator(img_orig, line_width=line_thickness, example=str(classes))
 
+    # Plot bounding boxes
     for j in range(nb_detected - 1, -1, -1):
-        xyxy = pt_yxyx2xyxy(yxyx[j])
+        xyxy = pt_yxyx2xyxy_yolo(yxyx[j])
         label = labels[int(classe[j])]
         label_score = label + f' {score[j]:0.3}'
         annotator.box_label(xyxy, label_score, colors(int(classe[j])))
@@ -41,13 +41,14 @@ def plot_masks(img_size, img_origs, yxyxs, classes, scores, masks, nb_detecteds,
     orig_h, orig_w = img_orig.shape[:2]
     yxyx = scale_coords_yolo(img_orig, img_size, yxyx)
 
-    # Plot bounding boxes
     line_thickness = int(round(0.0005 * (orig_h + orig_w) / 2) + 1)
     annotator = Annotator(img_orig, line_width=line_thickness, example=str(classes))
+    # Plot the masks
     annotator.masks(masks, colors=[(56, 56, 255) for _ in range(nb_detected)])
 
+    # Plot bounding boxes
     for j in range(nb_detected - 1, -1, -1):
-        xyxy = pt_yxyx2xyxy(yxyx[j])
+        xyxy = pt_yxyx2xyxy_yolo(yxyx[j])
         label = labels[int(classe[j])]
         label_score = label + f' {score[j]:0.3}'
         annotator.box_label(xyxy, label_score, colors(int(classe[j])))
