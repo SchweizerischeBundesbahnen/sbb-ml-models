@@ -34,8 +34,8 @@ class YoloNMS(nn.Module):
                  conf_thres=DEFAULT_CONF_THRESHOLD, normalized=True, nmsed=True):
         super(YoloNMS, self).__init__()
         self.model = model
-        self.names = model.names
-        self.nc = len(model.names)
+        self.names = model.class_labels
+        self.nc = len(self.names)
         self.max_det = max_det
         self.iou_thres = iou_thres
         self.conf_thres = conf_thres
@@ -60,7 +60,7 @@ class YoloNMS(nn.Module):
             x /= NORMALIZATION_FACTOR
 
         # Pass through YOLOv5
-        predictions = self.model(x)
+        predictions = self.model.torch_model(x)
 
         if isinstance(predictions, tuple):
             if len(predictions) == 3:
