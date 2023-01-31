@@ -46,7 +46,7 @@ class Detector:
             except ValueError as e:
                 raise ValueError(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
+            self.labels = self.model.labels
         elif self.model_name.endswith('.mlmodel'):
             logging.info('- The model is a CoreML model.')
             self.prefix = 'coreml'
@@ -55,7 +55,7 @@ class Detector:
             except Exception as e:
                 raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
+            self.labels = self.model.labels
         elif self.model_name.endswith('.pt'):
             logging.info('- The model is a PyTorch model.')
             self.prefix = 'pytorch'
@@ -64,7 +64,7 @@ class Detector:
             except Exception as e:
                 raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
+            self.labels = self.model.labels
         else:
             logging.info(
                 f"{RED}Model format not supported:{END_COLOR} {self.model_name}. Supported format: .mlmodel, .onnx, .tflite, .pt.")

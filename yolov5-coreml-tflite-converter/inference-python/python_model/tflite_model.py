@@ -125,9 +125,9 @@ class TFLiteModel:
 
             if MASKS_NAME in output_order:
                 masks = interpreter.get_tensor(output_details[output_order.index(MASKS_NAME)]['index'])
-                return [yxyx], [classes], [scores], masks, nb_detected
+                return yxyx, classes, scores, masks, nb_detected
 
-        return [yxyx], [classes], [scores], None, nb_detected
+        return yxyx, classes, scores, None, nb_detected
 
     def __load_labels(self):
         associated_files = self.metadata_displayer.get_packed_associated_file_list()

@@ -73,7 +73,7 @@ class PytorchToCoreMLConverter:
         if self.model.model_type == DETECTION:
             file_name += "_detection"
         else:
-            file_name += "segmentation"
+            file_name += "_segmentation"
 
         model = ct.models.MLModel(model_spec.spec)
         for quantization_type in self.quantization_types:
