@@ -96,6 +96,61 @@ class SPPCSPC(nn.Module):
         return self.cv7(torch.cat((y1, y2), dim=1))
 
 
+class RepConv(nn.Module):
+    # Represented convolution
+    # https://arxiv.org/abs/2101.03697
+
+    def __init__(self, c1, c2, k=3, s=1, p=None, g=1, act=True, deploy=False):
+        super(RepConv, self).__init__()
+
+        self.deploy = deploy
+        self.groups = g
+        self.in_channels = c1
+        self.out_channels = c2
+
+        assert k == 3
+        assert autopad(k, p) == 1
+
+        padding_11 = autopad(k, p) - k // 2
+
+        self.act = nn.SiLU() if act is True else (act if isinstance(act, nn.Module) else nn.Identity())
+
+        if deploy:
+            self.rbr_reparam = nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=True)
+
+        else:
+            self.rbr_identity = (nn.BatchNorm2d(num_features=c1) if c2 == c1 and s == 1 else None)
+
+            self.rbr_dense = nn.Sequential(
+                nn.Conv2d(c1, c2, k, s, autopad(k, p), groups=g, bias=False),
+                nn.BatchNorm2d(num_features=c2),
+            )
+
+            self.rbr_1x1 = nn.Sequential(
+                nn.Conv2d(c1, c2, 1, s, padding_11, groups=g, bias=False),
+                nn.BatchNorm2d(num_features=c2),
+            )
+
+    def forward(self, inputs):
+        if hasattr(self, "rbr_reparam"):
+            return self.act(self.rbr_reparam(inputs))
+
+        if self.rbr_identity is None:
+            id_out = 0
+        else:
+            id_out = self.rbr_identity(inputs)
+
+        return self.act(self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out)
+
+
+class Shortcut(nn.Module):
+    def __init__(self, dimension=0):
+        super(Shortcut, self).__init__()
+        self.d = dimension
+
+    def forward(self, x):
+        return x[0]+x[1]
+
 # YOLOV5
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     # Pad to 'same' shape outputs
