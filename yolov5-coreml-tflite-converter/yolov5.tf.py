@@ -11,6 +11,7 @@ Export:
 """
 
 import logging
+import math
 import sys
 from pathlib import Path
 
@@ -26,7 +27,7 @@ from tensorflow import keras
 
 # Add TFSPPF layer
 from models.common import Conv, Bottleneck, SPP, SPPF, DWConv, Focus, BottleneckCSP, Concat, autopad, C3, DownC, \
-    SPPCSPC
+    SPPCSPC, MP, SP, ReOrg, RepConv, Shortcut
 from models.experimental import MixConv2d
 from models.yolo import Detect, Segment
 from utils.general import make_divisible
@@ -69,11 +70,11 @@ class TFConv(keras.layers.Layer):
 
 class TFConv2d(keras.layers.Layer):
     # Substitution for PyTorch nn.Conv2D
-    def __init__(self, c1, c2, k, s=1, g=1, bias=True, w=None):
+    def __init__(self, c1, c2, k, s=1, g=1, bias=True, w=None, padding='valid'):
         super(TFConv2d, self).__init__()
         assert g == 1, "TF v2.2 Conv2D does not support 'groups' argument"
         self.conv = keras.layers.Conv2D(
-            c2, k, s, 'VALID', use_bias=bias,
+            c2, k, s, padding, use_bias=bias,
             kernel_initializer=keras.initializers.Constant(w.weight.permute(2, 3, 1, 0).detach().numpy()),
             bias_initializer=keras.initializers.Constant(w.bias.detach().numpy()) if bias else None, )
 
@@ -144,7 +145,58 @@ class TFSPPCSPC(keras.layers.Layer):
         return self.cv7(tf.concat([y1, y2], axis=3))
 
 
-## YOLOV5
+class TFRepConv(keras.layers.Layer):
+    def __init__(self, c1, c2, k=3, s=1, p=None, g=1, act=True, deploy=False, w=None):
+        super(TFRepConv, self).__init__()
+
+        self.deploy = deploy
+        self.groups = g
+        self.in_channels = c1
+        self.out_channels = c2
+
+        assert k == 3
+        assert autopad(k, p) == 1
+
+        self.act = keras.layers.Activation('sigmoid') if act is True else (act if isinstance(act, keras.layers.Layer) else keras.layers.Activation('linear'))
+
+        if deploy:
+            self.rbr_reparam = TFConv2d(c1, c2, k, s, g, w=w.rbr_reparam)
+
+        else:
+            self.rbr_identity = (TFBN(self.rbr_identity) if c2 == c1 and s == 1 else None)
+
+            self.rbr_dense = tf.keras.Sequential([
+                TFConv2d(c1, c2, k, s, g, bias=False, w=w.rbr_dense[0], padding='same'),
+                TFBN(w=w.rbr_dense[1]),
+            ])
+
+            self.rbr_1x1 = tf.keras.Sequential([
+                TFConv2d(c1, c2, 1, s, g, bias=False, w=w.rbr_1x1[0]),
+                TFBN(w=w.rbr_1x1[1]),
+            ])
+
+    def call(self, inputs):
+        if hasattr(self, "rbr_reparam"):
+            return self.act(self.rbr_reparam(inputs))
+
+        if self.rbr_identity is None:
+            id_out = 0
+        else:
+            id_out = self.rbr_identity(inputs)
+
+        return self.act(self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out)
+
+
+class TFShortcut(keras.layers.Layer):
+    def __init__(self, dimension=0, w=None):
+        super(TFShortcut, self).__init__()
+        self.d = dimension
+
+    def call(self, inputs):
+        x1, x2 = inputs
+        return x1 + x2
+
+    ## YOLOV5
 class TFBN(keras.layers.Layer):
     # TensorFlow BatchNormalization wrapper
     def __init__(self, w=None):
@@ -387,7 +439,7 @@ def parse_model(d, ch, model, imgsz):  # model_dict, input_channels(3)
                 pass
 
         n = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [nn.Conv2d, Conv, Bottleneck, SPP, SPPF, DWConv, MixConv2d, Focus, BottleneckCSP, C3, DownC, SPPCSPC]:
+        if m in [nn.Conv2d, Conv, Bottleneck, SPP, SPPF, DWConv, MixConv2d, Focus, BottleneckCSP, C3, DownC, SPPCSPC, RepConv]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8) if c2 != no else c2
 
@@ -397,6 +449,8 @@ def parse_model(d, ch, model, imgsz):  # model_dict, input_channels(3)
                 n = 1
         elif m is nn.BatchNorm2d:
             args = [ch[f]]
+        elif m is Shortcut:
+            c2 = ch[f[0]]
         elif m is Concat:
             c2 = sum([ch[-1 if x == -1 else x + 1] for x in f])
         elif m in {Detect, Segment}:

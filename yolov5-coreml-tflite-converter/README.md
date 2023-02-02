@@ -8,7 +8,9 @@ Pipenv is used to handle the dependencies, so make sure you have Pipenv installe
 Then run `./install.sh`. It will pull the code from the Yolov5 repo, and install all dependencies.
 Run `pipenv shell` to activate the pipenv environment and you're ready.
 
-On Macs M1, conda is used to handle the dependencies.
+On Macs M1, conda is used to handle the dependencies (https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html), 
+bazel 5.1.1 is also required (https://bazel.build/install/os-x).
+If you have e.g. bazel 6.0.0, run `cd "/opt/homebrew/Cellar/bazel/6.0.0/libexec/bin" && curl -fLO https://releases.bazel.build/5.1.1/release/bazel-5.1.1-darwin-arm64 && chmod +x bazel-5.1.1-darwin-arm64` to change to 5.1.1.
 Use `./init_conda_m1.sh` to create the conda environment and pull the code from the Yolov5 repo.
 Activate the environment with `conda activate converter_yolo` and install the dependencies
 with `./install_dependencies_m1.sh`.

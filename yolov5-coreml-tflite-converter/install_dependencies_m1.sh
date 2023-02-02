@@ -1,5 +1,6 @@
 echo "Installing all required packages..."
 conda install tensorflow=2.11.0
+conda install protobuf
 
 pip3 install -r requirements_m1.txt
 pip3 install -e converter_utils
