@@ -20,7 +20,8 @@ FULLINT8_SUFFIX = '_fullint8'
 BATCH_SIZE = 1
 NB_CHANNEL = 3
 
-# x, y, w, h, score, class1, class2, ...
+# x, y, w, h, score, class1, class2, ..., mask
+# 4 + 1 + nc + nm
 XY_SLICE = (0, 2)
 WH_SLICE = (2, 4)
 SCORE_SLICE = (4, 5)
@@ -34,6 +35,11 @@ NORMALIZED_SUFFIX = '_normalized'
 QUANTIZED_SUFFIX = '_quantized'
 IOU_NAME = 'iou threshold'
 CONF_NAME = 'conf threshold'
+
+# Model types
+UNKNOWN = 'unknown'
+DETECTION = 'detection'
+SEGMENTATION = 'segmentation'
 
 # Colors
 BLUE = '\033[36m'
@@ -81,14 +87,9 @@ BOUNDINGBOX_NAME = 'location'  # (y1, x1, y2, x2)
 CLASSES_NAME = 'category'  # class index
 SCORES_NAME = 'score'  # confidence score
 NUMBER_NAME = 'number of detections'  # number of detected object in the image
+MASKS_NAME = 'masks'  # masks for segmentation
 DETECTIONS_NAME = 'detection results'
 PREDICTIONS_NAME = 'predictions'
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
-# ONNX converter
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
-ONNX_SUFFIX = '.onnx'
-OPSET = 12
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Default values
@@ -115,11 +116,11 @@ DEFAULT_NB_CALIBRATION = 500
 DEFAULT_MAX_NUMBER_DETECTION = 20
 
 
-def get_zipfile_path(source):
+def get_zipfile_path(source: str):
     return os.path.join(DATA_DIR, f'{source}_500.zip')
 
 
-def get_dataset_url(source):
+def get_dataset_url(source: str):
     return f'https://sbb-ml-public-resources-prod.s3.eu-central-1.amazonaws.com/quantization/{source}_500.zip'
 
 

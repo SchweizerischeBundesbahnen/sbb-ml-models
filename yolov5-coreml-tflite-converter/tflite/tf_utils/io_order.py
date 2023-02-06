@@ -1,12 +1,36 @@
+from typing import List
+
+import tensorflow as tf
+
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, \
-    PREDICTIONS_NAME
+    PREDICTIONS_NAME, MASKS_NAME, SEGMENTATION
 
 
 class IOOrder:
+    """ Class to get the output order
+
+    Attributes
+    ----------
+    model_parameters: ModelParameters
+        The parameters for the model to be converted (e.g. include normalization, nms)
+    """
+
     def __init__(self, model_parameters):
         self.model_parameters = model_parameters
 
-    def get_output_order(self, interpreter):
+    def get_output_order(self, interpreter: tf.lite.TFLiteConverter) -> List[str]:
+        """ Returns the output order from the TFLite interpreter
+
+        Parameters
+        ----------
+        interpreter: tf.lite.TFLiteConverter
+            The TFLite converter
+
+        Returns
+        ----------
+        output_order: List[str]
+            The output names in order
+        """
         if self.model_parameters.include_nms:
             # FIXME: ugly fix because the output order is not always the same but the names are consistent
             # To get the names: convert a model and open the converted model with Netron
@@ -18,10 +42,13 @@ class IOOrder:
             # To differentiate between CLASSES_NAME and SCORE_NAME, take a look at the end of the model
             #   The SCORES_NAME should come from NonMaxSuppressionV4 -> Reshape -> Gather -> Reshape
             #   The CLASSES_NAME should come from NonMaxSuppressionV4 -> Reshape -> Gather -> Cast -> Reshape
-            output_map = {'StatefulPartitionedCall:0': NUMBER_NAME, 'StatefulPartitionedCall:1': BOUNDINGBOX_NAME,
-                          'StatefulPartitionedCall:2': CLASSES_NAME, 'StatefulPartitionedCall:3': SCORES_NAME,
-                          'Identity': BOUNDINGBOX_NAME, 'Identity_1': CLASSES_NAME,
-                          'Identity_2': SCORES_NAME, 'Identity_3': NUMBER_NAME}
+            if self.model_parameters.model_type == SEGMENTATION:
+                output_map = {'StatefulPartitionedCall:0': NUMBER_NAME, 'StatefulPartitionedCall:1': MASKS_NAME,
+                              'StatefulPartitionedCall:2': BOUNDINGBOX_NAME, 'StatefulPartitionedCall:3': CLASSES_NAME,
+                              'StatefulPartitionedCall:4': SCORES_NAME}
+            else:
+                output_map = {'StatefulPartitionedCall:0': NUMBER_NAME, 'StatefulPartitionedCall:1': BOUNDINGBOX_NAME,
+                              'StatefulPartitionedCall:2': CLASSES_NAME, 'StatefulPartitionedCall:3': SCORES_NAME}
 
             output_details = interpreter.get_output_details()
             try:
@@ -32,7 +59,19 @@ class IOOrder:
             output_order = [PREDICTIONS_NAME]
         return output_order
 
-    def get_input_order(self, interpreter):
+    def get_input_order(self, interpreter) -> List[str]:
+        """ Returns the input order from the TFLite interpreter
+
+        Parameters
+        ----------
+        interpreter: tf.lite.TFLiteConverter
+            The TFLite converter
+
+        Returns
+        ----------
+        input_order: List[str]
+            The input names in order
+        """
         if self.model_parameters.include_nms:
             # FIXME: ugly fix because the input order is not always the same but the names are consistent
             # To get the names: convert and model and open the converted model with Netron
@@ -48,7 +87,7 @@ class IOOrder:
             # Another way is trial and error: arbitrarily chose one to be IOU_NAME and the other to be CONF_NAME
             #   Convert a new model with these updated names
             #   The inference with conf = 1, no detections should be made
-            #   The inference with iou = 0, at most 1 detection is made
+            #   The inference with iou = 0, no overlap between the detections
             #   The inference with conf = 0, iou = 1, the maximum number of detections should be made, i.e. 20
             # If that is not the case, exchange IOU_NAME and CONF_NAME
             input_map = {'serving_default_input_1:0': IMAGE_NAME, 'serving_default_input_2:0': IOU_NAME,

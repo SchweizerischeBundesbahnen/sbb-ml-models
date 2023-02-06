@@ -8,14 +8,14 @@ import PIL
 import cv2
 import numpy as np
 import torch
-from utils.datasets import LoadImages
 
 from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DEFAULT_DETECTED_IMAGE_DIR, \
     DEFAULT_INPUT_RESOLUTION, RED, BLUE, END_COLOR, NORMALIZATION_FACTOR
 from python_model.coreml_model import CoreMLModel
 from python_model.pytorch_model import PyTorchModel
 from python_model.tflite_model import TFLiteModel
-from python_utils.plots import plot_boxes
+from python_utils.plots import plot_boxes, plot_masks
+from utils.dataloaders import LoadImages
 
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']
 
@@ -46,7 +46,7 @@ class Detector:
             except ValueError as e:
                 raise ValueError(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
+            self.labels = self.model.labels
         elif self.model_name.endswith('.mlmodel'):
             logging.info('- The model is a CoreML model.')
             self.prefix = 'coreml'
@@ -55,16 +55,7 @@ class Detector:
             except Exception as e:
                 raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
-        elif self.model_name.endswith('.onnx'):
-            logging.info('- The model is a ONNX model.')
-            self.prefix = 'onnx'
-            try:
-                self.model = ONNXModel(self.model_path)
-            except Exception as e:
-                raise Exception(f"{RED}An error occurred while initializing the model:{END_COLOR} {e}")
-            self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
+            self.labels = self.model.labels
         elif self.model_name.endswith('.pt'):
             logging.info('- The model is a PyTorch model.')
             self.prefix = 'pytorch'
@@ -73,7 +64,7 @@ class Detector:
             except Exception as e:
                 raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.get_labels()
+            self.labels = self.model.labels
         else:
             logging.info(
                 f"{RED}Model format not supported:{END_COLOR} {self.model_name}. Supported format: .mlmodel, .onnx, .tflite, .pt.")
@@ -96,13 +87,15 @@ class Detector:
 
         # Inference
         start_time = time.time()
-        yxyx, classes, scores, nb_detected = self.model.predict(img, iou_threshold, conf_threshold)
+        yxyx, classes, scores, masks, nb_detected = self.model.predict(img, iou_threshold, conf_threshold)
         inference_time = time.time() - start_time
 
         yxyx = yxyx if isinstance(yxyx, torch.Tensor) else torch.from_numpy(yxyx)
         classes = classes if isinstance(classes, torch.Tensor) else torch.from_numpy(classes)
         scores = scores if isinstance(scores, torch.Tensor) else torch.from_numpy(scores)
-        return yxyx, classes, scores, nb_detected, inference_time
+        if masks is not None:
+            masks = masks if isinstance(masks, torch.Tensor) else torch.from_numpy(masks)
+        return yxyx, classes, scores, masks, nb_detected, inference_time
 
     def detect(self, img_dir, max_img=-1, out_path=DEFAULT_DETECTED_IMAGE_DIR,
                iou_threshold=DEFAULT_IOU_THRESHOLD,
@@ -127,7 +120,7 @@ class Detector:
         try:
             if verbose:
                 logging.info(f"{BLUE}DETECTION START{END_COLOR}")
-            for i, (img_path, img, img_orig, _) in enumerate(dataset):
+            for i, (img_path, img, img_orig, _, _) in enumerate(dataset):
                 if max_img != -1 and (i + 1) * self.batch_size > max_img:
                     break
                 img_name = Path(img_path).name
@@ -138,20 +131,26 @@ class Detector:
 
                 img = torch.from_numpy(img)
 
-                yxyx, classes, scores, nb_detected, inference_time = self.detect_image(img, iou_threshold=iou_threshold,
-                                                                                       conf_threshold=conf_threshold)
+                yxyx, classes, scores, masks, nb_detected, inference_time = self.detect_image(img,
+                                                                                              iou_threshold=iou_threshold,
+                                                                                              conf_threshold=conf_threshold)
 
                 end_time = time.time()
                 inference_times.append(inference_time)
 
                 # Plot the bounding box
                 if save_img or return_image:
-                    plot_boxes(self.img_size, [img_orig], yxyx, classes, scores, nb_detected, self.labels)
+                    if masks is None:
+                        img_annotated = plot_boxes(self.img_size, [img_orig], yxyx, classes, scores, nb_detected,
+                                                   self.labels)
+                    else:
+                        img_annotated = plot_masks(self.img_size, [img_orig], yxyx, classes, scores, masks, nb_detected,
+                                                   self.labels)
                 end_plot_time = time.time()
 
                 # Save the results
-                img_annotated = img_orig
-                out_path_img = str(out_path / f"{self.prefix}_{img_name.rsplit('.')[0]}_boxes_{self.model_name.rsplit('.')[0]}.png")
+                out_path_img = str(
+                    out_path / f"{self.prefix}_{img_name.rsplit('.')[0]}_boxes_{self.model_name.rsplit('.')[0]}.png")
                 if save_img:
                     cv2.imwrite(out_path_img, img_annotated)
                 if return_image:
