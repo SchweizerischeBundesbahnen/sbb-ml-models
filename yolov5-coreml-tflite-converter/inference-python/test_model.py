@@ -4,13 +4,13 @@ from test_utils.comparison_test import ComparisonTest
 
 
 class ModelTest:
-    def __init__(self, model_path, reference_model_paths, data_path):
+    def __init__(self, model_path, reference_model_path, data_path):
         self.model_path = model_path
-        self.reference_model_paths = reference_model_paths
+        self.reference_model_path = reference_model_path
         self.data_path = data_path
 
     def run(self, verbose=True):
-        ComparisonTest(self.reference_model_paths, self.data_path).run_test(self.model_path, verbose=verbose)
+        ComparisonTest(self.reference_model_path, self.data_path).run_test(self.model_path, verbose=verbose)
 
 
 if __name__ == "__main__":
