@@ -1,5 +1,5 @@
 coremltools==6.1
-ipython==8.8.0
+ipython==8.10.0
 numpy==1.23.5
 psutil==5.9.4
 torch==1.13.0
