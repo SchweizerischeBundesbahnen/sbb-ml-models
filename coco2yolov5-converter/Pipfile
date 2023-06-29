@@ -5,16 +5,9 @@ name = "pypi"
 
 [packages]
 numpy = "==1.22.0"
-torch = "==1.7.1"
-torchvision = "==0.8.2"
-tensorboard = "==2.4.1"
-opencv-python = "==4.5.1.48"
 matplotlib = "==3.3.4"
 kwcoco = "==0.1.10"
 pytest = "==6.2.2"
-autopep8 = "==1.5.5"
-wandb = "==0.10.17"
-seaborn = "==0.11.1"
 
 [dev-packages]
 

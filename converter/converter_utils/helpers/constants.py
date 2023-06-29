@@ -86,10 +86,17 @@ TRAKTION = 'traktion'
 BOUNDINGBOX_NAME = 'location'  # (y1, x1, y2, x2)
 CLASSES_NAME = 'category'  # class index
 SCORES_NAME = 'score'  # confidence score
+
 NUMBER_NAME = 'number of detections'  # number of detected object in the image
 MASKS_NAME = 'masks'  # masks for segmentation
 DETECTIONS_NAME = 'detection results'
 PREDICTIONS_NAME = 'predictions'
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+# ONNX converter
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+ONNX_SUFFIX = '.onnx'
+OPSET = 12
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # Default values

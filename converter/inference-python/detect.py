@@ -14,6 +14,7 @@ from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DEF
 from python_model.coreml_model import CoreMLModel
 from python_model.pytorch_model import PyTorchModel
 from python_model.tflite_model import TFLiteModel
+from python_model.onnx_model import ONNXModel
 from python_utils.plots import plot_boxes, plot_masks
 from utils.dataloaders import LoadImages
 
@@ -61,6 +62,15 @@ class Detector:
             self.prefix = 'pytorch'
             try:
                 self.model = PyTorchModel(self.model_path, self.pt_input_resolution)
+            except Exception as e:
+                raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
+            self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
+            self.labels = self.model.labels
+        elif self.model_name.endswith(".onnx"):
+            logging.info('- The model is a ONNX model.')
+            self.prefix = 'onnx'
+            try:
+                self.model = ONNXModel(self.model_path)
             except Exception as e:
                 raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
             self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
