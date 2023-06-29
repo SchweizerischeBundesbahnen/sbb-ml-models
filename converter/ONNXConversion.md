@@ -43,3 +43,14 @@ Output:
   are relative to the image size.
 * **category**:  The category id for each detected box (1 x NB_DETECTION)
 * **score**: The confidence score for each detected box (1 x NB_DETECTION)
+
+Labels:
+* They are included in the converted model, as metadata.
+
+```python
+import onnx
+
+model = onnx.load("path_to_the_onnx_model")
+metadata = model.metadata_props
+labels = metadata[0].value.split(',')
+```

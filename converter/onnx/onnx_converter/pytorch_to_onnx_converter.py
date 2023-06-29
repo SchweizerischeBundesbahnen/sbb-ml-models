@@ -47,35 +47,6 @@ class PytorchToONNXConverter:
         self.__check_input_create_output()
         self.__init_pytorch_model()
 
-    def __check_input_create_output(self):
-        # Check input and create output
-        if not self.model_input_path.exists():
-            print(f"{RED}Model not found:{END_COLOR} '{str(self.model_input_path)}'")
-            exit(0)
-        self.model_output_directory_path.mkdir(parents=True, exist_ok=True)
-
-    def __init_pytorch_model(self):
-        self.model = PyTorchModelLoader(self.model_input_path, self.input_resolution).load(fuse=True)
-        self.sample_input = torch.zeros((BATCH_SIZE, NB_CHANNEL, self.input_resolution, self.input_resolution))
-
-    def __add_metadata(self, model, labels, quantization_type):
-        # Add metadata
-        meta = model.metadata_props.add()
-        meta.key = 'labels'
-        meta.value = ','.join(labels)
-
-        meta = model.metadata_props.add()
-        meta.key = 'quantized'
-        meta.value = quantization_type
-
-        meta = model.metadata_props.add()
-        meta.key = 'do_normalize'
-        meta.value = str(self.include_normalization)
-
-        meta = model.metadata_props.add()
-        meta.key = 'do_nms'
-        meta.value = str(self.include_nms)
-
     def convert(self):
         '''
         Converts a PyTorch model to a ONNX model
@@ -148,6 +119,35 @@ class PytorchToONNXConverter:
                 raise Exception(f'{RED}ONNX export failure:{END_COLOR} {e}')
 
         temp_converted_model_path.unlink()
+
+    def __check_input_create_output(self):
+        # Check input and create output
+        if not self.model_input_path.exists():
+            print(f"{RED}Model not found:{END_COLOR} '{str(self.model_input_path)}'")
+            exit(0)
+        self.model_output_directory_path.mkdir(parents=True, exist_ok=True)
+
+    def __init_pytorch_model(self):
+        self.model = PyTorchModelLoader(self.model_input_path, self.input_resolution).load(fuse=True)
+        self.sample_input = torch.zeros((BATCH_SIZE, NB_CHANNEL, self.input_resolution, self.input_resolution))
+
+    def __add_metadata(self, model, labels, quantization_type):
+        # Add metadata
+        meta = model.metadata_props.add()
+        meta.key = 'labels'
+        meta.value = ','.join(labels)
+
+        meta = model.metadata_props.add()
+        meta.key = 'quantized'
+        meta.value = quantization_type
+
+        meta = model.metadata_props.add()
+        meta.key = 'do_normalize'
+        meta.value = str(self.include_normalization)
+
+        meta = model.metadata_props.add()
+        meta.key = 'do_nms'
+        meta.value = str(self.include_nms)
 
     def __get_converted_model_name(self):
         basename = self.model_output_name
