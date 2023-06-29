@@ -79,6 +79,9 @@ class ONNXModel:
             scores = outputs[2]
             nb_detected = classes.shape[1]
 
+            if self.quantized == FLOAT16:
+                yxyx = np.array(yxyx, dtype=np.float32)
+
             return yxyx, classes, scores, None, torch.Tensor([nb_detected])
 
         else:

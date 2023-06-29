@@ -18,16 +18,8 @@ def main():
                         help=f'The resolution of the input images, e.g. {DEFAULT_INPUT_RESOLUTION} means input resolution is {DEFAULT_INPUT_RESOLUTION}x{DEFAULT_INPUT_RESOLUTION}. Default: {DEFAULT_INPUT_RESOLUTION}')  # height, width
     parser.add_argument('--quantize-model', nargs='+', dest="quantization_types", default=[DEFAULT_QUANTIZATION_TYPE],
                         help=f"Quantization: 'int8', 'float16' or 'float32' for no quantization. Default: [{DEFAULT_QUANTIZATION_TYPE}]")
-
-    # Optional parameters
-    parser.add_argument('--no-nms', action='store_true',
-                        help='If set, the converted model does not include the postprocessing (NMS)')
-    parser.add_argument('--no-normalization', action='store_true',
-                        help='If set, the converted model does not include the preprocessing (normalization)')
-
     parser.add_argument('--max-det', type=int, default=DEFAULT_MAX_NUMBER_DETECTION,
                         help=f'The maximum number of detections. Default: {DEFAULT_MAX_NUMBER_DETECTION}.')
-
     parser.add_argument('--iou-threshold', type=float, default=DEFAULT_IOU_THRESHOLD,
                         help=f"The IoU threshold, if set in the model. Default: {DEFAULT_IOU_THRESHOLD}")
     parser.add_argument('--conf-threshold', type=float, default=DEFAULT_CONF_THRESHOLD,
@@ -38,8 +30,6 @@ def main():
                                        model_output_directory=opt.model_output_directory,
                                        model_output_name=opt.model_output_name,
                                        input_resolution=opt.input_resolution,
-                                       include_nms=not opt.no_nms,
-                                       include_normalization=not opt.no_normalization,
                                        quantization_types=opt.quantization_types,
                                        max_det=opt.max_det,
                                        iou_threshold=opt.iou_threshold,
