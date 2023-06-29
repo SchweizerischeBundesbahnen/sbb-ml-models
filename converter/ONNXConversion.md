@@ -16,9 +16,11 @@ Only square inputs are considered at the moment, i.e. width=height.
 - Having the IoU and confidence as inputs to the model is not supported (e.g. they will be hard-coded into the model).
 
 ### Usage
-Go to the onnx directory and use:
+
+Use:
+
 ```bash
-poetry run python convert.py \
+python onnx/convert.py \
     --model PATH_TO_PT_MODEL \
     --out PATH_TO_OUTPUT_DIR \
     --output-name CONVERTED_MODEL_NAME \
