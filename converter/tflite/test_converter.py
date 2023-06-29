@@ -22,7 +22,7 @@ class ConverterTest(unittest.TestCase):
                                          model_parameters=model_parameters,
                                          conversion_parameters=conversion_parameters)
         # The input/output names are not consistent (i.e. incremental) and therefore not suited for the metadata
-        model_files = converter.convert(write_metadata=False)
+        model_files = converter.convert()
         # Check that the converted model indeed exists
         for model_file in model_files:
             assert os.path.exists(model_file), f"The model has not been converted: {model_file} does not exit."
