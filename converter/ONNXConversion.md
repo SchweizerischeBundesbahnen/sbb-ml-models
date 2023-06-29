@@ -25,7 +25,10 @@ python onnx/convert.py \
     --out PATH_TO_OUTPUT_DIR \
     --output-name CONVERTED_MODEL_NAME \
     --input-resolution INPUT_RESOLUTION \
-    --quantize-model float32 int8
+    --quantize-model float32 float16 int8 \
+    --iou-threshold 0.45 \
+    --conf-threshold 0.25
+    
 ```
 - The conversion script takes the PyTorch model as input (`--model`), the directory in which to save the converted model, as well as its name (`--out`and `--output-name`), i.e. the line above will produce models named `CONVERTED_MODEL_NAME.onnx`.
 - By default, the input resolution is 640 and the model is converted only in float32.
