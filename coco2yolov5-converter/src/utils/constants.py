@@ -1,0 +1,2 @@
+SEGMENTATION = 'segmentation'
+DETECTION = 'detection'

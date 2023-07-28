@@ -24,7 +24,8 @@ class TxtUtil:
         """
         precision = 5
         # More than 5 is in sub-pixel range: Typical img resolution is: 768px
-        lines = [
-            f"{label[0]} {round(label[1], precision)} {round(label[2], precision)} {round(label[3], precision)} {round(label[4], precision)}\n" for label in label_rows]
+        lines = [f"{label[0]} {' '.join([f'{round(label[i], precision)}' for i in range(1, len(label))])}\n" for label
+                 in label_rows]
+
         with txt_file.open('w') as file:
             file.writelines(lines)
