@@ -30,8 +30,8 @@ def convertRelCoco2Yolo(x: float, y: float, w: float, h: float):
     w = fix_coordinate_system(w)
     h = fix_coordinate_system(h)
 
-    x_yolo = x + w/2  # division has higher precedence than addition
-    y_yolo = y + h/2
+    x_yolo = x + w / 2  # division has higher precedence than addition
+    y_yolo = y + h / 2
 
     w_yolo = w
     h_yolo = h
@@ -44,10 +44,10 @@ def convertAbsCoco2relCoco(x, y, w, h, img_w, img_h):
     INPUT: coco absolute parameters, image width, image height (in pixels)
     OUTPUT: coco relative parameters
     """
-    x_rel = x/img_w
-    y_rel = y/img_h
-    w_rel = w/img_w
-    h_rel = h/img_h
+    x_rel = x / img_w
+    y_rel = y / img_h
+    w_rel = w / img_w
+    h_rel = h / img_h
     return (x_rel, y_rel, w_rel, h_rel)
 
 

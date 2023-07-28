@@ -1,6 +1,6 @@
 # disabling PyLint docstring, no self using
 # pylint: disable=C0115,C0116,R0201
-from src.converter.convert_util import convertRelCoco2Yolo, fix_coordinate_system
+from src.utils.coordinates_util import convertRelCoco2Yolo, fix_coordinate_system
 
 
 class TestConvert:
@@ -28,5 +28,6 @@ class TestConvert:
             assert fix_coordinate_system(x[0]) == x[1]
 
     def test_rounding_error_custom_values(self):
-        for x in [[-0.5, -0.5, -1, 1], [-0.01, 0, 0, 5], [-6, -5, -5, 10], [10.5, 10, 5, 10], [-4, -5, -10, -5], [11, 10, 1, 10]]:
+        for x in [[-0.5, -0.5, -1, 1], [-0.01, 0, 0, 5], [-6, -5, -5, 10], [10.5, 10, 5, 10], [-4, -5, -10, -5],
+                  [11, 10, 1, 10]]:
             assert fix_coordinate_system(x[0], x[2], x[3]) == x[1]

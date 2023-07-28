@@ -1,11 +1,10 @@
 # disabling PyLint docstring, no-self-using
 # pylint: disable=C0114,C0115,C0116,R0201
 import tempfile
-
 from pathlib import Path
 from unittest.case import TestCase
 
-from src.converter.filesystem_util import FileSystemUtil
+from src.utils.yolo_dataset import YoloDataset
 
 
 class YoloHelperTest(TestCase):
@@ -21,7 +20,7 @@ class YoloHelperTest(TestCase):
                 output_path / 'labels' / 'val',
             ]
 
-            FileSystemUtil.create_yolo_folder_structure(output_path)
+            YoloDataset(output_path, False)
             for test_item in test_items:
                 self.assertTrue(test_item.exists())
                 self.assertTrue(test_item.is_dir())
@@ -38,8 +37,8 @@ class YoloHelperTest(TestCase):
                 output_path / 'labels' / 'val',
             ]
 
-            FileSystemUtil.create_yolo_folder_structure(output_path)
-            FileSystemUtil.create_yolo_folder_structure(output_path)
+            YoloDataset(output_path, False)
+            YoloDataset(output_path, True)
 
             for test_item in test_items:
                 self.assertTrue(test_item.exists())
