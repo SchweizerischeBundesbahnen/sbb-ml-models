@@ -1,9 +1,10 @@
 # disabling PyLint docstring, no self using
 # pylint: disable=C0114,C0115,C0116,R0201
 import tempfile
-from pathlib import Path
 import yaml
-from src.converter.yaml_util import YamlUtil
+from pathlib import Path
+
+from src.utils.yaml_util import YamlUtil
 
 
 class TestYamlUtil:
@@ -11,7 +12,7 @@ class TestYamlUtil:
         with tempfile.TemporaryDirectory() as tmp_dir:
             yaml_config_path = Path(tmp_dir) / 'output'
             YamlUtil.write_yolo_config_file(
-                "../train", "../val", ["a", "b", "c", "d"], yaml_config_path)
+                "../train", "../val", ["a", "b", "c", "d"], yaml_config_path, False)
             with yaml_config_path.open('r') as file:
                 res = yaml.safe_load(file)
                 assert res['train'] == "../train"
@@ -21,7 +22,7 @@ class TestYamlUtil:
         with tempfile.TemporaryDirectory() as tmp_dir:
             yaml_config_path = Path(tmp_dir) / 'output'
             YamlUtil.write_yolo_config_file(
-                "../train", "../val", [], yaml_config_path)
+                "../train", "../val", [], yaml_config_path, False)
             with yaml_config_path.open('r') as file:
                 res = yaml.safe_load(file)
                 assert res['train'] == "../train"
