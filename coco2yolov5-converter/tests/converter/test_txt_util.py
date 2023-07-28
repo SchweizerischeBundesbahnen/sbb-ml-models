@@ -2,7 +2,8 @@
 # pylint: disable=C0114,C0115,C0116,R0201
 import tempfile
 from pathlib import Path
-from src.converter.txt_util import TxtUtil
+
+from src.utils.txt_util import TxtUtil
 
 
 class TestTxtUtil:
@@ -16,9 +17,9 @@ class TestTxtUtil:
 
     def test_write_txt(self):
         labels = [[0, 0.34567, 1.0, 0.99999, 0.0001],
-                  [0, 0.1, 0.2, 0.3, 0.4]]
+                  [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]]
         assert self.write_labels_to_temp_dir_and_return_content(labels) == """0 0.34567 1.0 0.99999 0.0001
-0 0.1 0.2 0.3 0.4
+0 0.1 0.2 0.3 0.4 0.5 0.6
 """
 
     def test_write_empty_txt(self):
