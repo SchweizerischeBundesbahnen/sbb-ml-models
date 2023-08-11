@@ -1,14 +1,16 @@
+import ast
 import json
 import logging
 
 import numpy as np
 import tensorflow as tf
-from tf_model.tf_nms import NMS
-from tf_utils.parameters import PostprocessingParameters
-from tflite_support import metadata as _metadata
-
+import torch
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, NORMALIZED_SUFFIX, QUANTIZED_SUFFIX, BOUNDINGBOX_NAME, \
-    CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, SIMPLE, MASKS_NAME
+    CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, MASKS_NAME, PREDICTIONS_ULTRALYTICS_NAME, \
+    DEFAULT_MAX_NUMBER_DETECTION, PROTOS_NAME
+from helpers.constants import YOLOv5, ULTRALYTICS
+from tf_model.tf_nms import NMS
+from tflite_support import metadata as _metadata
 
 
 class TFLiteModel:
@@ -27,7 +29,7 @@ class TFLiteModel:
         self.labels = self.__load_labels()
         logging.info(f"- There are {len(self.labels)} labels.")
         # Load information from metadata
-        self.output_order, self.input_order, self.normalized_image, self.do_nms, self.quantized = self.__read_from_metadata()
+        self.output_order, self.input_order, self.normalized_image, self.do_nms, self.quantized, self.model_orig = self.__read_from_metadata()
         # Initialize the interepreter
         interpreter = tf.lite.Interpreter(model_path=model_path)
         self.input_details = interpreter.get_input_details()
@@ -95,16 +97,28 @@ class TFLiteModel:
 
             interpreter.invoke()
 
-            predictions = interpreter.get_tensor(output_details[0]['index'])
+            if self.model_orig == YOLOv5:
+                predictions_name = PREDICTIONS_NAME
+            else:
+                predictions_name = PREDICTIONS_ULTRALYTICS_NAME
 
+            predictions = interpreter.get_tensor(output_details[output_order.index(predictions_name)]['index'])
             if quantized:
-                scale, zero_point = output_details[0]['quantization']
+                scale, zero_point = output_details[output_order.index(predictions_name)]['quantization']
                 predictions = predictions.astype(np.float32)
                 predictions = (predictions - zero_point) * scale
 
             # Postprocessing
-            nms = NMS(PostprocessingParameters(nms_type=SIMPLE), [iou_threshold], [conf_threshold])
-            yxyx, classes, scores, nb_detected = nms.compute(predictions)
+            nms = NMS(DEFAULT_MAX_NUMBER_DETECTION, [iou_threshold], [conf_threshold], self.model_orig)
+
+            if PROTOS_NAME in output_order:
+                protos = interpreter.get_tensor(output_details[output_order.index(PROTOS_NAME)]['index'])
+                yxyx, classes, scores, masks, nb_detected = [x.numpy() for x in
+                                                             nms.compute_with_masks((predictions, protos),
+                                                                                    len(self.labels), self.img_size[0])]
+                return yxyx, classes, scores, masks, nb_detected
+
+            yxyx, classes, scores, nb_detected = [x.numpy() for x in nms.compute(predictions, len(self.labels))]
         else:
 
             interpreter.set_tensor(input_details[input_order.index(IMAGE_NAME)]['index'], img)
@@ -131,11 +145,12 @@ class TFLiteModel:
 
     def __load_labels(self):
         associated_files = self.metadata_displayer.get_packed_associated_file_list()
-
-        if 'labels.txt' in associated_files:
-            labels = self.metadata_displayer.get_associated_file_buffer('labels.txt').decode().split('\n')[:-1]
+        if 'temp_meta.txt' in associated_files:
+            labels = \
+            ast.literal_eval(self.metadata_displayer.get_associated_file_buffer('temp_meta.txt').decode('utf-8'))[
+                'names']
         else:
-            raise ValueError("The model does not contain the file labels.txt.")
+            raise ValueError("The model does not contain the metadata: temp_meta.txt.")
         return labels
 
     def __read_from_metadata(self):
@@ -143,6 +158,7 @@ class TFLiteModel:
         metadata = json.loads(json_file)
         # Read input order
         input_metadata = metadata['subgraph_metadata'][0]['input_tensor_metadata']
+
         input_order = [input['name'] if IMAGE_NAME not in input['name'] else IMAGE_NAME for input in input_metadata]
 
         normalized_image = False
@@ -165,6 +181,7 @@ class TFLiteModel:
         # Read output order
         output_metadata = metadata['subgraph_metadata'][0]['output_tensor_metadata']
         output_order = [output['name'] for output in output_metadata]
+        model_orig = None
         # Check the outputs
         if len(output_order) == 4:
             # Detection
@@ -182,9 +199,19 @@ class TFLiteModel:
                     raise ValueError(f'Unknown output: {output_name}')
                 expected_output_name.remove(output_name)
             do_nms = False
+        elif len(output_order) == 2:
+            # Segmentation
+            expected_output_name = [PREDICTIONS_NAME, PREDICTIONS_ULTRALYTICS_NAME, PROTOS_NAME]
+            for output_name in output_order:
+                if output_name not in expected_output_name:
+                    raise ValueError(f'Unknown output: {output_name}')
+                expected_output_name.remove(output_name)
+            do_nms = True
+            model_orig = ULTRALYTICS if PREDICTIONS_ULTRALYTICS_NAME in output_order else YOLOv5
         else:
-            if output_order[0] != PREDICTIONS_NAME:
+            if output_order[0] not in [PREDICTIONS_NAME, PREDICTIONS_ULTRALYTICS_NAME]:
                 raise ValueError(f'Unknown output: {output_order[0]}')
             do_nms = True
+            model_orig = ULTRALYTICS if output_order[0] == PREDICTIONS_ULTRALYTICS_NAME else YOLOv5
 
-        return output_order, input_order, normalized_image, do_nms, quantized_image
+        return output_order, input_order, normalized_image, do_nms, quantized_image, model_orig

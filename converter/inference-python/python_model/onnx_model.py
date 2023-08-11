@@ -6,9 +6,8 @@ import onnxruntime
 import torch
 
 from helpers.constants import BATCH_SIZE, FLOAT16, IMAGE_NAME, SCORES_NAME, CLASSES_NAME, \
-    BOUNDINGBOX_NAME, SIMPLE, PREDICTIONS_NAME
+    BOUNDINGBOX_NAME, PREDICTIONS_NAME, DEFAULT_MAX_NUMBER_DETECTION
 from tf_model.tf_nms import NMS
-from tf_utils.parameters import PostprocessingParameters
 
 
 class ONNXModel:
@@ -87,7 +86,7 @@ class ONNXModel:
         else:
             predictions = self.session.run([PREDICTIONS_NAME], {IMAGE_NAME: np.array(img)})[0]
 
-            nms = NMS(PostprocessingParameters(nms_type=SIMPLE), [iou_threshold], [conf_threshold])
+            nms = NMS(DEFAULT_MAX_NUMBER_DETECTION, [iou_threshold], [conf_threshold])
             yxyx, classes, scores, nb_detected = nms.compute(predictions)
 
             return yxyx, classes, scores, None, nb_detected

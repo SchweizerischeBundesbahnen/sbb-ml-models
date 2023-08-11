@@ -1,5 +1,5 @@
 import logging
-
+import ast
 import torch
 from coremltools.models.model import MLModel
 
@@ -24,7 +24,8 @@ class CoreMLModel:
         pipeline = spec.pipeline
         self.labels = [label.rstrip() for label in pipeline.models[-1].nonMaximumSuppression.stringClassLabels.vector]
         if len(self.labels) == 0:
-            self.labels = spec.description.output[-1].shortDescription.split(',')
+            self.labels = ast.literal_eval(self.model.user_defined_metadata['names'])
+
         logging.info(f"- There are {len(self.labels)} labels.")
 
         input_details = spec.description.input
@@ -72,10 +73,10 @@ class CoreMLModel:
         """
         try:
             predictions = self.model.predict(
-                {IMAGE_NAME: img, IOU_NAME: iou_threshold, CONF_NAME: conf_threshold})
+                {IMAGE_NAME: img, IOU_NAME: [iou_threshold], CONF_NAME: [conf_threshold]})
         except:
             predictions = self.model.predict(
-                {IMAGE_NAME: img, IOU_NAME: [iou_threshold], CONF_NAME: [conf_threshold]})
+                {IMAGE_NAME: img, IOU_NAME: iou_threshold, CONF_NAME: conf_threshold})
 
         yxyx = torch.from_numpy(predictions[COORDINATES_NAME]).view(-1, 4)
         confidence = torch.from_numpy(predictions[CONFIDENCE_NAME]).view(-1, len(self.labels))

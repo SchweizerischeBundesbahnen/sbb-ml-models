@@ -78,7 +78,7 @@ class ComparisonTest:
         self.iouv = torch.linspace(0.5, 0.95, 10)
         self.seen = 0
 
-        # If the don't consider the same image size, add a reference dataset
+        # If they don't consider the same image size, add a reference dataset
         if self.reference_detector.img_size != self.detector.img_size:
             reference_dataset = LoadImages(self.data_path, img_size=self.reference_detector.img_size, auto=False)
             for i, ((img_path, img, img_orig, _, _), (_, reference_img, _, _, _)) in enumerate(
@@ -144,9 +144,9 @@ class ComparisonTest:
         yxyx, classes, scores, _, nb_detected, inference_time = self.detector.detect_image(img)
         xyxy = pt_yxyx2xyxy_yolo(yxyx)
 
-        reference_yxyx, reference_classes, reference_scores, _, reference_nb_detected, reference_inference_time = self.detector.detect_image(
+        reference_yxyx, reference_classes, reference_scores, _, reference_nb_detected, reference_inference_time = self.reference_detector.detect_image(
             reference_img)
-        reference_xyxy = pt_yxyx2xyxy_yolo(yxyx)
+        reference_xyxy = pt_yxyx2xyxy_yolo(reference_yxyx)
 
         if self.verbose:
             image_name = Path(img_path).name
@@ -160,7 +160,7 @@ class ComparisonTest:
 
             # Compared model result (Nx6)
             predn = torch.cat([xyxy[i], scores[i].unsqueeze(1), classes[i].unsqueeze(1)], dim=1)
-            # Reference model result (Nx6)
+            # Reference model result (Nx5)
             reference_predn = torch.cat([reference_classes[i].unsqueeze(1), reference_xyxy[i]], dim=1)
 
             self.inference_time[0].append(inference_time)

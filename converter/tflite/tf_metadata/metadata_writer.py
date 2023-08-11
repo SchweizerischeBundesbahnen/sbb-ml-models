@@ -1,16 +1,16 @@
+import logging
 import shutil
 import tempfile
 from pathlib import Path
 from typing import List
 
+from helpers.constants import FULLINT8, METADATA_FILE_NAME, SEGMENTATION, RED, END_COLOR, BLUE, GREEN
 from tf_metadata.input_metadata_writer import InputMetadataWriter
 from tf_metadata.output_metadata_writer import OutputMetadataWriter
 from tf_utils.parameters import ModelParameters
 from tflite_support import flatbuffers
 from tflite_support import metadata as _metadata
 from tflite_support import metadata_schema_py_generated as _metadata_fb
-
-from helpers.constants import FULLINT8, LABELS_NAME, SEGMENTATION
 
 
 class MetadataWriter:
@@ -27,12 +27,6 @@ class MetadataWriter:
     model_parameters: ModelParameters
         The parameters for the model to be converted (e.g. type, use nms, ...)
 
-    labels: List[str]
-        The labels for the classes
-
-    max_det: int
-        The maximum number of detections made by the model
-
     quantized: str
         The quantization type (`float32`, `float16` or `int8`)
 
@@ -41,22 +35,21 @@ class MetadataWriter:
     """
 
     def __init__(self, input_order: List[str], output_order: List[str], model_parameters: ModelParameters,
-                 labels: List[str], max_det: int,
                  quantized: str, tflite_path: str):
 
         self.tflite_path = tflite_path
         # Input
         self.model_type = model_parameters.model_type
-        self.include_threshold = model_parameters.include_threshold
         self.input_resolution = model_parameters.input_resolution
         self.include_normalization = model_parameters.include_normalization
         self.quantized = quantized
         # Output
+        self.model_orig = model_parameters.model_orig
         self.include_nms = model_parameters.include_nms
         self.input_order = input_order
         self.output_order = output_order
-        self.labels = labels
-        self.max_det = max_det
+        self.metadata = model_parameters.metadata
+        self.max_det = model_parameters.max_det
 
     def write(self):
         """ Writes the metadata into the TFLite model """
@@ -65,40 +58,43 @@ class MetadataWriter:
         self.__create_model_info()
 
         try:
+            logging.info(f'{BLUE}Populating metadata for the TFLite model...{END_COLOR}')
             input_writer = InputMetadataWriter(self.input_order, self.input_resolution, self.include_normalization,
                                                quantized=self.quantized == FULLINT8 and not self.include_nms,
-                                               multiple_inputs=not self.include_threshold and self.include_nms)
+                                               multiple_inputs=self.include_nms)
             self.input_meta = input_writer.write()
 
-            output_writer = OutputMetadataWriter(self.output_order, self.labels_path, len(self.labels), self.max_det,
-                                                 self.include_nms)
+            output_writer = OutputMetadataWriter(self.output_order, self.metadata_path, len(self.metadata['names']),
+                                                 self.max_det,
+                                                 self.include_nms, self.model_orig, self.model_type)
             self.output_meta, self.output_group = output_writer.write()
 
             self.__create_subgraph()
             self.__populate_metadata()
+            logging.info(f'{GREEN}TFLite metadata population success.{END_COLOR}')
         except Exception as e:
-            raise ValueError(f"ERROR: {e}")
+            raise ValueError(f'{RED}TFLite metadata population failure:{END_COLOR} {e}')
         finally:
             shutil.rmtree(self.tmp_dir_path)
 
     def __create_associated_files(self):
         # Create the labels file
-        self.labels_path = self.tmp_dir_path / LABELS_NAME
-        with self.labels_path.open('w') as h:
-            for l in self.labels:
-                h.write(f'{l}\n')
+        self.metadata_path = self.tmp_dir_path / METADATA_FILE_NAME
+        with self.metadata_path.open('w') as f:
+            f.write(str(self.metadata))
 
     def __create_model_info(self):
         # Write model basic info
         self.model_meta = _metadata_fb.ModelMetadataT()
+        self.model_meta.name = self.metadata['description']
+        self.model_meta.version = self.metadata['version']
+        self.model_meta.author = self.metadata['author']
+        self.model_meta.license = self.metadata['license']
         if self.model_type == SEGMENTATION:
-            self.model_meta.name = "YoloV5 object detection"
             self.model_meta.description = ("Detect object in a image and show them with bounding boxes.")
         else:
-            self.model_meta.name = "YoloV5 object segmentation"
             self.model_meta.description = (
                 "Detect object in a image and show them with bounding boxes and segmentation.")
-        self.model_meta.version = "v1"
 
     def __create_subgraph(self):
         # Creates subgraph with the input and output
@@ -121,5 +117,5 @@ class MetadataWriter:
         populator.load_metadata_buffer(metadata_buf)
 
         # Add labels.txt to the tflite model.
-        populator.load_associated_files([self.labels_path])
+        populator.load_associated_files([self.metadata_path])
         populator.populate()

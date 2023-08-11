@@ -1,12 +1,12 @@
 import logging
 
 import torch
-
-from helpers.constants import BATCH_SIZE, DEFAULT_INPUT_RESOLUTION
+from helpers.constants import BATCH_SIZE, DEFAULT_INPUT_RESOLUTION, YOLOv5
 from helpers.coordinates import pt_yxyx2xyxy_yolo
 from pytorch_utils.pytorch_loader import PyTorchModelLoader
 from pytorch_utils.pytorch_nms import YoloNMS
 from utils.segment.general import process_mask
+from tf_utils.parameters import ModelParameters
 
 
 class PyTorchModel:
@@ -20,9 +20,11 @@ class PyTorchModel:
     input_resolution: int
         The input resolution for the input to the model
     """
+
     def __init__(self, model_path, input_resolution=DEFAULT_INPUT_RESOLUTION):
         logging.info("- Initializing PyTorch model...")
-        self.model = PyTorchModelLoader(model_path, input_resolution).load(fuse=True)
+        model_parameters = ModelParameters(input_resolution=input_resolution)
+        self.model = PyTorchModelLoader(model_path, model_parameters).load(fuse=True)
 
         # Load labels
         self.labels = self.model.class_labels
@@ -70,7 +72,7 @@ class PyTorchModel:
         xyxy = pt_yxyx2xyxy_yolo(yxyx[0][:nb_detected])
 
         if masks.shape[2] != 0:
-            masks = process_mask(protos[0], masks, xyxy, self.img_size, upsample=True)  # HWC
+            masks = process_mask(protos[0], masks[0], xyxy, self.img_size, upsample=True)  # HWC
         else:
             masks = None
 

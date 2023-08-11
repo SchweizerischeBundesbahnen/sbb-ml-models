@@ -30,13 +30,6 @@ def pt_yxyx2xyxy_yolo(yxyx):
     return xyxy
 
 
-def pt_xywh2xyxy_yolo(xywh):
-    # Convert nx4 boxes from [x, y, w, h] (x,y center) to [x1, y1, x2, y2] (xy1=top-left, xy2=bottom-right)
-    yxyx = pt_xywh2yxyx_yolo(xywh)
-    xyxy = pt_yxyx2xyxy_yolo(yxyx)
-    return xyxy
-
-
 def pt_yxyx2xywh_coco(yxyx):
     # Convert nx4 boxes [y1, x1, y2, x2] (xy1=top-left, xy2=bottom-right) to [x, y, w, h] (xy top-left)
     yxyx = yxyx if isinstance(yxyx, torch.Tensor) else torch.from_numpy(yxyx)

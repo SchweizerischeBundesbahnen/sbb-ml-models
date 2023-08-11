@@ -2,7 +2,7 @@ from typing import List
 
 from helpers.constants import DEFAULT_INPUT_RESOLUTION, DEFAULT_SOURCE_DATASET, DEFAULT_NB_CALIBRATION, \
     DEFAULT_MAX_NUMBER_DETECTION, FLOAT32, FLOAT16, INT8, \
-    FULLINT8, BAHNHOF, WAGEN, TRAKTION, TFLITE, SAVED_MODEL, PADDED, SIMPLE, COMBINED, DETECTION, SEGMENTATION, UNKNOWN
+    FULLINT8, BAHNHOF, WAGEN, TRAKTION, DETECTION, SEGMENTATION, UNKNOWN
 
 
 class ModelParameters:
@@ -22,28 +22,29 @@ class ModelParameters:
     include_normalization: bool
         Whether to include normalization in the model
 
-    include_threshold: bool
-        Whether to include the thresholds (iou, conf) in the model - if nms is included
+    max_det: int
+        The maximum number of detections
 
     nb_classes: int
         The number of classes detected by the model
     """
 
     def __init__(self, model_type: str = UNKNOWN,
+                 model_orig: str = UNKNOWN,
                  input_resolution: int = DEFAULT_INPUT_RESOLUTION,
                  include_nms: bool = True,
                  include_normalization: bool = True,
-                 include_threshold: bool = False,
+                 max_det: int = DEFAULT_MAX_NUMBER_DETECTION,
                  nb_classes: int = -1):
         self.model_type = model_type
         if model_type not in [UNKNOWN, DETECTION, SEGMENTATION]:
             raise ValueError(
                 f"The model type: '{model_type}' is not supported. Needs to bo one of '{DETECTION}', '{SEGMENTATION}'.")
-
+        self.model_orig = model_orig
         self.input_resolution = input_resolution
         self.include_nms = include_nms
         self.include_normalization = include_normalization
-        self.include_threshold = include_threshold
+        self.max_det = max_det
         self.nb_classes = nb_classes
 
 
@@ -52,9 +53,6 @@ class ConversionParameters:
 
     Attributes
     ----------
-    dest: str
-        The destination, e.g. TFlite or saved_model
-
     quantization_types: List[str]
         The quantization types to use for the conversion
 
@@ -68,17 +66,11 @@ class ConversionParameters:
         The source for the representative dataset if any (`bahnhof`, `wagen`, `traktion`)
     """
 
-    def __init__(self, dest: str = TFLITE,
-                 quantization_types: List[str] = None,
+    def __init__(self, quantization_types: List[str] = None,
                  write_metadata: bool = True,
                  use_representative_dataset: bool = False,
                  source: str = DEFAULT_SOURCE_DATASET,
                  nb_calib: int = DEFAULT_NB_CALIBRATION):
-        if dest not in [SAVED_MODEL, TFLITE]:
-            raise ValueError(
-                f"Destination format '{dest}'' not recognized: must be one of '{SAVED_MODEL}', '{TFLITE}'.")
-        self.dest = dest
-
         if quantization_types is None:
             quantization_types = [FLOAT32]
         for quantization_type in quantization_types:
@@ -92,24 +84,3 @@ class ConversionParameters:
             raise ValueError(f"Source '{source}' not recognized: must be one of '{BAHNHOF}', '{WAGEN}', '{TRAKTION}'.")
         self.source = source
         self.nb_calib = nb_calib
-
-
-class PostprocessingParameters:
-    """ Parameters for the postprocessing
-
-    Attributes
-    ----------
-    max_det: int
-        The max number of detections made by the converted model
-
-    nms_type: str
-        The type of NMS to use if NMS is included (`simple`, `padded`, `combined`)
-    """
-
-    def __init__(self, max_det: int = DEFAULT_MAX_NUMBER_DETECTION,
-                 nms_type: str = PADDED):
-        self.max_det = max_det
-        if nms_type not in [SIMPLE, PADDED, COMBINED]:
-            raise ValueError(
-                f"NMS algorithm '{nms_type}' not recognized: must be one of '{SIMPLE}', '{PADDED}', '{COMBINED}'.")
-        self.nms_type = nms_type

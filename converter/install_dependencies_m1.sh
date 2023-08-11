@@ -6,6 +6,7 @@ pip3 install -r requirements_m1.txt
 pip3 install -e converter_utils
 pip3 install -e tflite
 pip3 install -e yolov5
+pip3 install -e ultralytics
 
 rm -rf tflite-support && git clone https://github.com/tensorflow/tflite-support.git
 

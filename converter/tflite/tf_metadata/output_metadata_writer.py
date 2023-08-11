@@ -1,11 +1,10 @@
 import os
 from typing import List
 
+from helpers.constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, \
+    PREDICTIONS_NAME, MASKS_NAME, PREDICTIONS_ULTRALYTICS_NAME, YOLOv5, DETECTION, PROTOS_NAME
 from tf_metadata.metadata_utils import MetadataHelper
 from tflite_support import metadata_schema_py_generated as _metadata_fb
-
-from helpers.constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, \
-    PREDICTIONS_NAME, MASKS_NAME
 
 
 class OutputMetadataWriter(MetadataHelper):
@@ -29,17 +28,19 @@ class OutputMetadataWriter(MetadataHelper):
         Whether the model has several outputs
     """
 
-    def __init__(self, output_order: List[str], labels_path: str, nb_labels: int, max_det: int,
-                 multiple_outputs: bool = False):
+    def __init__(self, output_order: List[str], metadata_path: str, nb_labels: int, max_det: int,
+                 include_nms: bool, model_orig: str, model_type: str):
         self.output_order = output_order
-        self.labels_path = labels_path
+        self.metadata_path = metadata_path
         self.nb_labels = nb_labels
         self.max_det = max_det
-        self.multiple_outputs = multiple_outputs
+        self.include_nms = include_nms
+        self.model_orig = model_orig
+        self.model_type = model_type
 
     def write(self) -> (List[_metadata_fb.TensorMetadataT], List[_metadata_fb.TensorGroupT]):
         """ Write the output metadata """
-        if self.multiple_outputs:
+        if self.include_nms:
             # 4 for detections, 5 for segmentations
             if len(self.output_order) not in [4, 5]:
                 raise ValueError(
@@ -51,38 +52,56 @@ class OutputMetadataWriter(MetadataHelper):
 
             group = _metadata_fb.TensorGroupT()
             group.name = DETECTIONS_NAME
-            if len(self.output_order) == 5:
+            if self.model_type == DETECTION:
+                # For the detection
+                group.tensorNames = [yxyx_meta.name, class_meta.name, score_meta.name]
+                output_map = {BOUNDINGBOX_NAME: yxyx_meta, CLASSES_NAME: class_meta,
+                              SCORES_NAME: score_meta, NUMBER_NAME: nb_detected_meta}
+            else:
                 # For the segmentation
                 masks_meta = self.__create_masks_meta()
                 group.tensorNames = [yxyx_meta.name, class_meta.name, score_meta.name, masks_meta.name]
                 output_map = {BOUNDINGBOX_NAME: yxyx_meta, CLASSES_NAME: class_meta,
                               SCORES_NAME: score_meta, NUMBER_NAME: nb_detected_meta, MASKS_NAME: masks_meta}
-            else:
-                # For the detection
-                group.tensorNames = [yxyx_meta.name, class_meta.name, score_meta.name]
-                output_map = {BOUNDINGBOX_NAME: yxyx_meta, CLASSES_NAME: class_meta,
-                              SCORES_NAME: score_meta, NUMBER_NAME: nb_detected_meta}
 
             output_metadata = [output_map[output_name] for output_name in self.output_order]
             output_group = [group]
             return output_metadata, output_group
         else:
-            # Predictions
-            if len(self.output_order) != 1:
-                raise ValueError(
-                    f"Expected 1 output ({PREDICTIONS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
-            predictions_meta = self.__create_prediction_meta()
-            return [predictions_meta], None
+            if self.model_type == DETECTION:
+                # Predictions
+                if len(self.output_order) != 1:
+                    raise ValueError(
+                        f"Expected 1 output ({PREDICTIONS_NAME if self.model_orig == YOLOv5 else PREDICTIONS_ULTRALYTICS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
+                predictions_meta = self.__create_prediction_meta()
+                return [predictions_meta], None
+            else:
+                # Predictions, protos
+                if len(self.output_order) != 1:
+                    raise ValueError(
+                        f"Expected 2 outputs ({PREDICTIONS_NAME if self.model_orig == YOLOv5 else PREDICTIONS_ULTRALYTICS_NAME}, {PROTOS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
+                predictions_meta = self.__create_prediction_meta()
+                protos_meta = self.__create_protos_meta()
+                return [predictions_meta, protos_meta], None
 
     def __create_prediction_meta(self):
         # Creates the metadata for the predictions
         predictions_meta = _metadata_fb.TensorMetadataT()
-        predictions_meta.name = PREDICTIONS_NAME
+        predictions_meta.name = PREDICTIONS_NAME if self.model_orig == YOLOv5 else PREDICTIONS_ULTRALYTICS_NAME
         predictions_meta.description = "The predictions made by each grid cell of the model on which one needs to run NMS."
         self._add_content_feature(predictions_meta)
         self._add_stats(predictions_meta, 1.0, 0)
-        self.__add_labels_file(predictions_meta)
+        self.__add_metadata_file(predictions_meta)
         return predictions_meta
+
+    def __create_protos_meta(self):
+        # Creates the metadata for the predictions
+        protos_meta = _metadata_fb.TensorMetadataT()
+        protos_meta.name = PROTOS_NAME
+        protos_meta.description = "The protos (used to compute masks)."
+        self._add_content_feature(protos_meta)
+        self._add_stats(protos_meta, 1.0, 0)
+        return protos_meta
 
     def __create_yxyx_meta(self):
         # Creates the metadata for the bounding boxes
@@ -102,7 +121,7 @@ class OutputMetadataWriter(MetadataHelper):
         self._add_content_feature(class_meta)
         self._add_range(class_meta)
         self._add_stats(class_meta, self.nb_labels, 0)
-        self.__add_labels_file(class_meta)
+        self.__add_metadata_file(class_meta)
         return class_meta
 
     def __create_score_meta(self):
@@ -133,10 +152,10 @@ class OutputMetadataWriter(MetadataHelper):
         self._add_stats(masks_meta, 1.0, 0.0)
         return masks_meta
 
-    def __add_labels_file(self, meta):
+    def __add_metadata_file(self, meta):
         # Adds the labels to the metadata
-        label_file = _metadata_fb.AssociatedFileT()
-        label_file.name = os.path.basename(self.labels_path)
-        label_file.description = "Labels for objects that the model can detect."
-        label_file.type = _metadata_fb.AssociatedFileType.TENSOR_VALUE_LABELS
-        meta.associatedFiles = [label_file]
+        metadata_file = _metadata_fb.AssociatedFileT()
+        metadata_file.name = os.path.basename(self.metadata_path)
+        metadata_file.description = "Metadata for the model."
+        metadata_file.type = _metadata_fb.AssociatedFileType.TENSOR_VALUE_LABELS
+        meta.associatedFiles = [metadata_file]

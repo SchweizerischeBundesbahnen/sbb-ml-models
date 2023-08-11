@@ -45,10 +45,14 @@ class IOOrder:
             if self.model_parameters.model_type == SEGMENTATION:
                 output_map = {'StatefulPartitionedCall:0': NUMBER_NAME, 'StatefulPartitionedCall:1': MASKS_NAME,
                               'StatefulPartitionedCall:2': BOUNDINGBOX_NAME, 'StatefulPartitionedCall:3': CLASSES_NAME,
-                              'StatefulPartitionedCall:4': SCORES_NAME}
+                              'StatefulPartitionedCall:4': SCORES_NAME, 'PartitionedCall:0': NUMBER_NAME,
+                              'PartitionedCall:1': MASKS_NAME, 'PartitionedCall:2': BOUNDINGBOX_NAME,
+                              'PartitionedCall:3': CLASSES_NAME, 'PartitionedCall:4': SCORES_NAME}
             else:
                 output_map = {'StatefulPartitionedCall:0': NUMBER_NAME, 'StatefulPartitionedCall:1': BOUNDINGBOX_NAME,
-                              'StatefulPartitionedCall:2': CLASSES_NAME, 'StatefulPartitionedCall:3': SCORES_NAME}
+                              'StatefulPartitionedCall:2': CLASSES_NAME, 'StatefulPartitionedCall:3': SCORES_NAME,
+                              'PartitionedCall:0': NUMBER_NAME, 'PartitionedCall:1': BOUNDINGBOX_NAME,
+                              'PartitionedCall:2': CLASSES_NAME, 'PartitionedCall:3': SCORES_NAME}
 
             output_details = interpreter.get_output_details()
             try:

@@ -5,6 +5,7 @@ import os
 # -------------------------------------------------------------------------------------------------------------------- #
 # General
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
+
 DATA_DIR = os.path.join('data')
 OUTPUT_DIR = os.path.join(DATA_DIR, 'output')
 
@@ -33,13 +34,15 @@ NORMALIZATION_FACTOR = 255.
 IMAGE_NAME = 'image'
 NORMALIZED_SUFFIX = '_normalized'
 QUANTIZED_SUFFIX = '_quantized'
-IOU_NAME = 'iou threshold'
-CONF_NAME = 'conf threshold'
+IOU_NAME = 'iouThreshold'
+CONF_NAME = 'confidenceThreshold'
 
 # Model types
 UNKNOWN = 'unknown'
 DETECTION = 'detection'
 SEGMENTATION = 'segmentation'
+YOLOv5 = 'yolov5'
+ULTRALYTICS = 'ultralytics'
 
 # Colors
 BLUE = '\033[36m'
@@ -54,7 +57,7 @@ BOLD = '\033[1m'
 # CoreML converter
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 COREML_SUFFIX = '.mlmodel'
-TORCHSCRIPT_SUFFIX = '.torchscript.pt'
+PT_SUFFIX = '.pt'
 
 # Outputs names
 CONFIDENCE_NAME = 'confidence'  # list of class scores
@@ -65,17 +68,7 @@ RAW_PREFIX = 'raw_'
 # TFLite converter
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 TFLITE_SUFFIX = '.tflite'
-LABELS_NAME = 'labels.txt'
-
-# Format
-TFLITE = 'tflite'
-SAVED_MODEL = 'saved_model'
-GRAPH_DEF_SUFFIX = '.pb'
-
-# NMS
-PADDED = 'padded'
-SIMPLE = 'simple'
-COMBINED = 'combined'
+METADATA_FILE_NAME = 'temp_meta.txt'
 
 # Representative dataset
 BAHNHOF = 'bahnhof'
@@ -90,7 +83,9 @@ SCORES_NAME = 'score'  # confidence score
 NUMBER_NAME = 'number of detections'  # number of detected object in the image
 MASKS_NAME = 'masks'  # masks for segmentation
 DETECTIONS_NAME = 'detection results'
-PREDICTIONS_NAME = 'predictions'
+PREDICTIONS_NAME = 'predictions'  # For (batch_size, num_boxes, num_classes + 5 + num_masks)
+PREDICTIONS_ULTRALYTICS_NAME = 'output'  # For (batch_size, num_classes + 4 + num_masks, num_boxes)
+PROTOS_NAME = 'protos'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 # ONNX converter
