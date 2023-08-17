@@ -2,10 +2,9 @@ import logging
 
 import coremltools as ct
 from coremltools.models.pipeline import Pipeline
-
 from helpers.constants import CONFIDENCE_NAME, COORDINATES_NAME, IMAGE_NAME, IOU_NAME, CONF_NAME, DEFAULT_IOU_THRESHOLD, \
     DEFAULT_CONF_THRESHOLD, \
-    BATCH_SIZE, END_COLOR, BLUE, MASKS_NAME, DETECTION, NUMBER_NAME, SEGMENTATION
+    BATCH_SIZE, END_COLOR, BLUE, MASKS_NAME, NUMBER_NAME
 
 
 class ModelSpecGenerator:
@@ -38,27 +37,16 @@ class ModelSpecGenerator:
 
         """
         logging.info(f'{BLUE}Combining CoreML model with NMS and export model...{END_COLOR}')
-        # Combine models to a single one
-        if self.model.model_type == DETECTION:
-            # Built-in NMS: e.g. IoU and conf are double
-            inputs = [
-                (IMAGE_NAME,
-                 ct.models.datatypes.Array(BATCH_SIZE, self.model.input_resolution, self.model.input_resolution)),
-                (IOU_NAME, ct.models.datatypes.Double()),
-                (CONF_NAME, ct.models.datatypes.Double())
-            ]
-            # confidence score for each predictions/classes, coordinates for each predictions
-            outputs = [CONFIDENCE_NAME, COORDINATES_NAME]
-        else:
-            # Implement NMS: e.g. IoU and conf need to be an array
-            inputs = [
-                (IMAGE_NAME,
-                 ct.models.datatypes.Array(BATCH_SIZE, self.model.input_resolution, self.model.input_resolution)),
-                (IOU_NAME, ct.models.datatypes.Array(1, )),
-                (CONF_NAME, ct.models.datatypes.Array(1, ))
-            ]
-            # confidence score for each predictions/classes, coordinates and masks for each predictions, number of detections
-            outputs = [CONFIDENCE_NAME, COORDINATES_NAME, MASKS_NAME, NUMBER_NAME]
+        # Implement NMS: e.g. IoU and conf need to be an array
+        inputs = [
+            (IMAGE_NAME,
+             ct.models.datatypes.Array(BATCH_SIZE, self.model.model_parameters.input_resolution,
+                                       self.model.model_parameters.input_resolution)),
+            (IOU_NAME, ct.models.datatypes.Array(1, )),
+            (CONF_NAME, ct.models.datatypes.Array(1, ))
+        ]
+        # confidence score for each predictions/classes, coordinates and masks for each predictions, number of detections
+        outputs = [CONFIDENCE_NAME, COORDINATES_NAME, MASKS_NAME, NUMBER_NAME]
 
         pipeline = ct.models.pipeline.Pipeline(
             input_features=inputs,
@@ -78,23 +66,19 @@ class ModelSpecGenerator:
         pipeline.spec.description.output[1].ParseFromString(
             model2_spec.description.output[1].SerializeToString())
 
-        # Metadata for the model‚
+        # Metadata for the model
         pipeline.spec.description.input[
-            1].shortDescription = f"(optional) IOU Threshold override (Default: {DEFAULT_IOU_THRESHOLD})"
+            1].shortDescription = f"IOU Threshold override (Default: {DEFAULT_IOU_THRESHOLD})"
         pipeline.spec.description.input[
-            2].shortDescription = f"(optional) Confidence Threshold override (Default: {DEFAULT_CONF_THRESHOLD})"
+            2].shortDescription = f"Confidence Threshold override (Default: {DEFAULT_CONF_THRESHOLD})"
         pipeline.spec.description.output[0].shortDescription = u"Boxes \xd7 Class confidence"
         pipeline.spec.description.output[
             1].shortDescription = u"Boxes \xd7 [x, y, width, height] (relative to image size)"
 
-        if self.model.model_type == SEGMENTATION:
-            pipeline.spec.description.output[2].ParseFromString(
-                model2_spec.description.output[2].SerializeToString())
-            pipeline.spec.description.output[
-                2].shortDescription = u"Boxes \xd7 [masks height, masks width]"
-            pipeline.spec.description.output[3].ParseFromString(
-                model2_spec.description.output[3].SerializeToString())
-            pipeline.spec.description.output[
-                3].shortDescription = ",".join(self.model.class_labels)
-
+        pipeline.spec.description.output[2].ParseFromString(
+            model2_spec.description.output[2].SerializeToString())
+        pipeline.spec.description.output[2].shortDescription = u"Boxes \xd7 [masks height, masks width]"
+        pipeline.spec.description.output[3].ParseFromString(
+            model2_spec.description.output[3].SerializeToString())
+        pipeline.spec.description.output[3].shortDescription = u"Number of detections"
         return pipeline

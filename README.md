@@ -26,7 +26,7 @@ Include some demo videos
 
 ## How to use the models
 In order for a YoloV5 model to be used on mobile, one needs to convert it to a suitable format. This is CoreML for an iOS app and TFLite for an Android app.
-All information required to convert a model can be found [here](yolov5-coreml-tflite-converter/README.md).
+All information required to convert a model can be found [here](converter/README.md).
 
 We have also developed libraries in order to facilitate the deployment of the converted YoloV5 model on mobile:
 [Android library](https://github.com/SchweizerischeBundesbahnen/mobile-android-ml) and [iOS library](https://github.com/SchweizerischeBundesbahnen/mobile-ios-ml)
@@ -36,6 +36,7 @@ The Coco dataset format is a widely-used format for object detection. However Yo
 All information required to convert a dataset can be found [here](coco2yolov5-converter/README.md).
 
 The [official yolov5 repository](https://github.com/ultralytics/yolov5) contains the script to train a YoloV5 model.
+The [official ultralytics repository](https://github.com/ultralytics/ultralytics) contains the script to train a YoloV5 (new version) or YoloV8 model.
 
 ## Authors
 * **Jeanne Fleury**

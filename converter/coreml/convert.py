@@ -48,19 +48,16 @@ optional arguments:
 
 from argparse import ArgumentParser
 
-from coreml_converter.pytorch_to_coreml_converter import PytorchToCoreMLConverter
-from helpers.constants import DEFAULT_MODEL_OUTPUT_DIR, DEFAULT_COREML_NAME, DEFAULT_INPUT_RESOLUTION, \
+from helpers.constants import DEFAULT_INPUT_RESOLUTION, \
     DEFAULT_QUANTIZATION_TYPE, DEFAULT_MAX_NUMBER_DETECTION
+
+from coreml_converter.pytorch_to_coreml_converter import PytorchToCoreMLConverter
 
 
 def main():
     parser = ArgumentParser()
     parser.add_argument('--model', type=str, dest="model_input_path", required=True,
                         help=f"The path to yolov5 model.")
-    parser.add_argument('--out', type=str, dest="model_output_directory", default=DEFAULT_MODEL_OUTPUT_DIR,
-                        help=f"The path to the directory in which to save the converted model. Default: {DEFAULT_MODEL_OUTPUT_DIR}")
-    parser.add_argument('--output-name', type=str, dest="model_output_name",
-                        default=DEFAULT_COREML_NAME, help=f'The model output name. Default: {DEFAULT_COREML_NAME}')
     parser.add_argument('--input-resolution', type=int, dest="input_resolution", default=DEFAULT_INPUT_RESOLUTION,
                         help=f'The resolution of the input images, e.g. {DEFAULT_INPUT_RESOLUTION} means input resolution is {DEFAULT_INPUT_RESOLUTION}x{DEFAULT_INPUT_RESOLUTION}. Default: {DEFAULT_INPUT_RESOLUTION}')  # height, width
     parser.add_argument('--quantize-model', nargs='+', dest="quantization_types", default=[DEFAULT_QUANTIZATION_TYPE],
@@ -69,8 +66,9 @@ def main():
                         help=f'The maximum number of detections. Default: {DEFAULT_MAX_NUMBER_DETECTION}.')
     opt = parser.parse_args()
 
-    converter = PytorchToCoreMLConverter(opt.model_input_path, opt.model_output_directory, opt.model_output_name,
-                                         opt.quantization_types, opt.input_resolution, opt.max_det)
+    converter = PytorchToCoreMLConverter(model_input_path=opt.model_input_path,
+                                         quantization_types=opt.quantization_types,
+                                         input_resolution=opt.input_resolution, max_det=opt.max_det)
     converter.convert()
 
 
