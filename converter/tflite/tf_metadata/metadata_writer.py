@@ -27,7 +27,7 @@ class MetadataWriter:
     model_parameters: ModelParameters
         The parameters for the model to be converted (e.g. type, use nms, ...)
 
-    quantized: str
+    quantization_type: str
         The quantization type (`float32`, `float16` or `int8`)
 
     tflite_path: str
@@ -35,14 +35,14 @@ class MetadataWriter:
     """
 
     def __init__(self, input_order: List[str], output_order: List[str], model_parameters: ModelParameters,
-                 quantized: str, tflite_path: str):
+                 quantization_type: str, tflite_path: str):
 
         self.tflite_path = tflite_path
         # Input
         self.model_type = model_parameters.model_type
         self.input_resolution = model_parameters.input_resolution
         self.include_normalization = model_parameters.include_normalization
-        self.quantized = quantized
+        self.quantization_type = quantization_type
         # Output
         self.model_orig = model_parameters.model_orig
         self.include_nms = model_parameters.include_nms
@@ -60,7 +60,6 @@ class MetadataWriter:
         try:
             logging.info(f'{BLUE}Populating metadata for the TFLite model...{END_COLOR}')
             input_writer = InputMetadataWriter(self.input_order, self.input_resolution, self.include_normalization,
-                                               quantized=self.quantized == FULLINT8 and not self.include_nms,
                                                multiple_inputs=self.include_nms)
             self.input_meta = input_writer.write()
 
@@ -80,6 +79,7 @@ class MetadataWriter:
     def __create_associated_files(self):
         # Create the labels file
         self.metadata_path = self.tmp_dir_path / METADATA_FILE_NAME
+        self.metadata.update({'input_names': self.input_order, 'output_names': self.output_order, 'quantization_type': self.quantization_type})
         with self.metadata_path.open('w') as f:
             f.write(str(self.metadata))
 
@@ -91,10 +91,11 @@ class MetadataWriter:
         self.model_meta.author = self.metadata['author']
         self.model_meta.license = self.metadata['license']
         if self.model_type == SEGMENTATION:
-            self.model_meta.description = ("Detect object in a image and show them with bounding boxes.")
-        else:
             self.model_meta.description = (
                 "Detect object in a image and show them with bounding boxes and segmentation.")
+        else:
+            self.model_meta.description = (
+                "Detect object in a image and show them with bounding boxes.")
 
     def __create_subgraph(self):
         # Creates subgraph with the input and output

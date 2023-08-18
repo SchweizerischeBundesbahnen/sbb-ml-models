@@ -145,8 +145,8 @@ class PytorchToONNXConverter:
     def __add_metadata(self, model, inputs, outputs, quantization_type):
         metadata = self.model_parameters.metadata
         metadata.update({'input_names': inputs,
-                         'output_names': outputs})
-        metadata.update({'quantization': quantization_type})
+                         'output_names': outputs,
+                         'quantization_type': quantization_type})
 
         for k, v in metadata.items():
             meta = model.metadata_props.add()
@@ -180,9 +180,4 @@ class PytorchToONNXConverter:
             basename += '_no-nms'
 
         basename += f'_{self.model_parameters.input_resolution}'
-
-        if self.model_parameters.model_type == DETECTION:
-            basename += "_detection"
-        else:
-            basename += "_segmentation"
         return basename + ONNX_SUFFIX

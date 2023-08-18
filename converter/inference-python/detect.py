@@ -8,13 +8,9 @@ import PIL
 import cv2
 import numpy as np
 import torch
-
-from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DEFAULT_DETECTED_IMAGE_DIR, \
-    DEFAULT_INPUT_RESOLUTION, RED, BLUE, END_COLOR, NORMALIZATION_FACTOR
-from python_model.coreml_model import CoreMLModel
-from python_model.pytorch_model import PyTorchModel
-from python_model.tflite_model import TFLiteModel
-from python_model.onnx_model import ONNXModel
+from python_model.inference_model import InferenceModel
+from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DETECTION_IMAGE_DIR, \
+    DEFAULT_INPUT_RESOLUTION, RED, BLUE, END_COLOR, NORMALIZATION_FACTOR, SEGMENTATION_IMAGE_DIR, SEGMENTATION
 from python_utils.plots import plot_boxes, plot_masks
 from utils.dataloaders import LoadImages
 
@@ -22,63 +18,12 @@ IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']
 
 
 class Detector:
-
-    def __init__(self, model_path, pt_input_resolution=DEFAULT_INPUT_RESOLUTION):
+    def __init__(self, model_path):
         logging.basicConfig(format='%(asctime)s %(message)s', datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
         self.model_path = model_path
-        self.pt_input_resolution = pt_input_resolution
-
-        self.__init_model()
-
-    def __init_model(self):
-        # Init model (TFLite, CoreML, PyTorch)
-        self.model_name = Path(self.model_path).name
-
-        if not Path(self.model_path).exists():
-            logging.info(f"{RED}Model not found:{END_COLOR} '{self.model_path}'")
-            exit(0)
-
-        logging.info('SETUP: finding the type of the model...')
-        if self.model_name.endswith('.tflite'):
-            logging.info('- The model is a TFLite model.')
-            self.prefix = 'tflite'
-            try:
-                self.model = TFLiteModel(self.model_path)
-            except ValueError as e:
-                raise ValueError(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
-            self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.labels
-        elif self.model_name.endswith('.mlmodel'):
-            logging.info('- The model is a CoreML model.')
-            self.prefix = 'coreml'
-            try:
-                self.model = CoreMLModel(self.model_path)
-            except Exception as e:
-                raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
-            self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.labels
-        elif self.model_name.endswith('.pt'):
-            logging.info('- The model is a PyTorch model.')
-            self.prefix = 'pytorch'
-            try:
-                self.model = PyTorchModel(self.model_path, self.pt_input_resolution)
-            except Exception as e:
-                raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
-            self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.labels
-        elif self.model_name.endswith(".onnx"):
-            logging.info('- The model is a ONNX model.')
-            self.prefix = 'onnx'
-            try:
-                self.model = ONNXModel(self.model_path)
-            except Exception as e:
-                raise Exception(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
-            self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
-            self.labels = self.model.labels
-        else:
-            logging.info(
-                f"{RED}Model format not supported:{END_COLOR} {self.model_name}. Supported format: .mlmodel, .onnx, .tflite, .pt.")
-            exit(0)
+        self.model = InferenceModel(model_path)
+        self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
+        self.labels = self.model.get_labels()
 
     def detect_image(self, img, iou_threshold=DEFAULT_IOU_THRESHOLD, conf_threshold=DEFAULT_CONF_THRESHOLD):
         img = img.float()
@@ -107,12 +52,16 @@ class Detector:
             masks = masks if isinstance(masks, torch.Tensor) else torch.from_numpy(masks)
         return yxyx, classes, scores, masks, nb_detected, inference_time
 
-    def detect(self, img_dir, max_img=-1, out_path=DEFAULT_DETECTED_IMAGE_DIR,
+    def detect(self, img_dir, max_img=-1,
                iou_threshold=DEFAULT_IOU_THRESHOLD,
                conf_threshold=DEFAULT_CONF_THRESHOLD, save_img=True, return_image=False, verbose=True):
 
         img_path = Path(img_dir)
-        out_path = Path(out_path)
+
+        if self.model.model.model_type == SEGMENTATION:
+            out_path = Path(SEGMENTATION_IMAGE_DIR) / self.model.prefix
+        else:
+            out_path = Path(DETECTION_IMAGE_DIR) / self.model.prefix
 
         if not img_path.exists():
             logging.info(f"{RED}Directory not found:{END_COLOR} {img_dir}.")
@@ -160,7 +109,7 @@ class Detector:
 
                 # Save the results
                 out_path_img = str(
-                    out_path / f"{self.prefix}_{img_name.rsplit('.')[0]}_boxes_{self.model_name.rsplit('.')[0]}.png")
+                    out_path / f"{img_name.rsplit('.')[0]}_boxes_{self.model.model_name.rsplit('.')[0]}.png")
                 if save_img:
                     cv2.imwrite(out_path_img, img_annotated)
                 if return_image:
@@ -203,8 +152,6 @@ if __name__ == "__main__":
                         help=f"The path to the images.")
     parser.add_argument('--max-img', type=int, default=-1,
                         help="The number of images to predict (maximum) among all the images in the directory. Default: -1 (no limit: all images in the directory will be processed).")
-    parser.add_argument('--out', type=str, default=DEFAULT_DETECTED_IMAGE_DIR,
-                        help=f"The path to the output directory (where to save the results). Default: '{DEFAULT_DETECTED_IMAGE_DIR}'.")
     parser.add_argument('--iou-threshold', type=float, default=DEFAULT_IOU_THRESHOLD,
                         help=f'IoU threshold. Default: {DEFAULT_IOU_THRESHOLD}')
     parser.add_argument('--conf-threshold', type=float, default=DEFAULT_CONF_THRESHOLD,
@@ -214,5 +161,4 @@ if __name__ == "__main__":
     opt = parser.parse_args()
 
     detector = Detector(opt.model)
-    detector.detect(img_dir=opt.img_dir, max_img=opt.max_img, out_path=opt.out,
-                    iou_threshold=opt.iou_threshold, conf_threshold=opt.conf_threshold, save_img=not opt.no_save)
+    detector.detect(img_dir=opt.img_dir, max_img=opt.max_img, iou_threshold=opt.iou_threshold, conf_threshold=opt.conf_threshold, save_img=not opt.no_save)

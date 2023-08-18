@@ -83,8 +83,7 @@ SCORES_NAME = 'score'  # confidence score
 NUMBER_NAME = 'number of detections'  # number of detected object in the image
 MASKS_NAME = 'masks'  # masks for segmentation
 DETECTIONS_NAME = 'detection results'
-PREDICTIONS_NAME = 'predictions'  # For (batch_size, num_boxes, num_classes + 5 + num_masks)
-PREDICTIONS_ULTRALYTICS_NAME = 'output'  # For (batch_size, num_classes + 4 + num_masks, num_boxes)
+PREDICTIONS_NAME = 'predictions'  # For (batch_size, num_boxes, num_classes + 5 + num_masks) / (batch_size, num_classes + 4 + num_masks, num_boxes)
 PROTOS_NAME = 'protos'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
@@ -129,4 +128,5 @@ def get_dataset_url(source: str):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 # Inference
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
-DEFAULT_DETECTED_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'detections')
+DETECTION_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'detections')
+SEGMENTATION_IMAGE_DIR = os.path.join(OUTPUT_DIR, 'segmentations')

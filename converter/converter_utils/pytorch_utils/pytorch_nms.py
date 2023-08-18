@@ -1,8 +1,9 @@
 import torchvision.ops
-from torch import nn
 from helpers.constants import SCORE_SLICE, CLASSES_SLICE, WH_SLICE, DEFAULT_MAX_NUMBER_DETECTION, DEFAULT_IOU_THRESHOLD, \
     DEFAULT_CONF_THRESHOLD, NORMALIZATION_FACTOR, ULTRALYTICS, YOLOv5
 from helpers.coordinates import pt_xywh2yxyx_yolo
+from torch import nn
+
 
 class YoloNMS(nn.Module):
     """ Class to add NMS to the Yolo model
@@ -28,11 +29,11 @@ class YoloNMS(nn.Module):
         If NMS should be applied to the output of the model
     """
 
-    def __init__(self, model, max_det=DEFAULT_MAX_NUMBER_DETECTION, iou_thres=DEFAULT_IOU_THRESHOLD,
+    def __init__(self, pt_model, max_det=DEFAULT_MAX_NUMBER_DETECTION, iou_thres=DEFAULT_IOU_THRESHOLD,
                  conf_thres=DEFAULT_CONF_THRESHOLD, normalized=True, nmsed=True, class_labels=None):
         super(YoloNMS, self).__init__()
-        self.model = model
-        self.names = class_labels if class_labels else model.class_labels
+        self.pt_model = pt_model
+        self.names = class_labels if class_labels else pt_model.torch_model.names
         self.nc = len(self.names)
         self.max_det = max_det
         self.iou_thres = iou_thres
@@ -57,7 +58,7 @@ class YoloNMS(nn.Module):
             # Normalize the input
             x /= NORMALIZATION_FACTOR
         # Pass through YOLOv5
-        predictions = self.model.torch_model(x)
+        predictions = self.pt_model.torch_model(x)
 
         if isinstance(predictions, tuple):
             if len(predictions) == 3:
@@ -76,14 +77,10 @@ class YoloNMS(nn.Module):
             return images_predictions, protos
 
         # Yolov5 output: torch.Size([1, 25200, 85]) / Yolov8: torch.Size([1, 84, 8400])
-        shape = images_predictions.shape
-
-        if shape[1] > shape[2]:
-             return self.nms_yolov5(images_predictions, YOLOv5), protos
-        else:
-            return self.nms_yolov5(images_predictions, ULTRALYTICS), protos
+        return self.nms_yolov5(images_predictions, self.pt_model.model_parameters.model_orig), protos
 
     def nms_yolov5(self, images_predictions, model_orig):
+        print(images_predictions.shape)
         # YOLOV5 (1, nb predictions, 4 + 1 + nb classes + nb masks)
         # ULTRALYTICS (1, 4 + nb classes + nb masks)
         # E.g. score does not exist anymore in new one.
@@ -92,7 +89,7 @@ class YoloNMS(nn.Module):
         if model_orig == ULTRALYTICS:
             candidates = images_predictions[:, 4:mi].amax(1) > self.conf_thres  # candidates
         else:
-            candidates = images_predictions[..., SCORE_SLICE[0]] > self.conf_thres # candidates
+            candidates = images_predictions[..., SCORE_SLICE[0]] > self.conf_thres  # candidates
         if model_orig == ULTRALYTICS:
             images_predictions = images_predictions.transpose(-1, -2)  # shape(1,84,6300) to shape(1,6300,84)
 
@@ -100,12 +97,13 @@ class YoloNMS(nn.Module):
             image_prediction = image_prediction[candidates[i]]  # confidence
 
             if model_orig == ULTRALYTICS:
-                scores = image_prediction[:, CLASSES_SLICE[0]-1:CLASSES_SLICE[0]-1 + self.nc]
+                scores = image_prediction[:, CLASSES_SLICE[0] - 1:CLASSES_SLICE[0] - 1 + self.nc]
             else:
                 scores = image_prediction[:, CLASSES_SLICE[0]:CLASSES_SLICE[0] + self.nc] * image_prediction[:,
-                                         SCORE_SLICE[0]:SCORE_SLICE[1]]
+                                                                                            SCORE_SLICE[0]:SCORE_SLICE[
+                                                                                                1]]
 
-            yxyx = pt_xywh2yxyx_yolo(image_prediction[:, :WH_SLICE[1]]) # xywh to yxyx
+            yxyx = pt_xywh2yxyx_yolo(image_prediction[:, :WH_SLICE[1]])  # xywh to yxyx
 
             scores, classes = scores.max(1, keepdim=True)
             scores = scores.reshape(scores.shape[0])

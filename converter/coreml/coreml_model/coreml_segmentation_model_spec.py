@@ -37,6 +37,8 @@ class CoreMLSegmentationModelSpec:
         # Output: predictions (1, #predictions, nO), (1, nM, H, W)
         # #predictions = number of unfiltered predictions, nO = number of outputs (#classes + 5 + nM)
         # nM = number of masks, H = input img height / 4, W = input img height / 4
+        self.pt_model.torch_model.model[-1].export = True
+        self.pt_model.torch_model.model[-1].format = 'coreml'
         self.pt_model.torchscript_model = TorchscriptExporter(self.pt_model).export()
 
         # Convert torchscript to raw coreml model

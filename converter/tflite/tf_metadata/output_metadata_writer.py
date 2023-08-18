@@ -2,7 +2,7 @@ import os
 from typing import List
 
 from helpers.constants import BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, DETECTIONS_NAME, \
-    PREDICTIONS_NAME, MASKS_NAME, PREDICTIONS_ULTRALYTICS_NAME, YOLOv5, DETECTION, PROTOS_NAME
+    PREDICTIONS_NAME, MASKS_NAME, DETECTION, PROTOS_NAME
 from tf_metadata.metadata_utils import MetadataHelper
 from tflite_support import metadata_schema_py_generated as _metadata_fb
 
@@ -72,22 +72,24 @@ class OutputMetadataWriter(MetadataHelper):
                 # Predictions
                 if len(self.output_order) != 1:
                     raise ValueError(
-                        f"Expected 1 output ({PREDICTIONS_NAME if self.model_orig == YOLOv5 else PREDICTIONS_ULTRALYTICS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
+                        f"Expected 1 output ({PREDICTIONS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
                 predictions_meta = self.__create_prediction_meta()
                 return [predictions_meta], None
             else:
                 # Predictions, protos
-                if len(self.output_order) != 1:
+                if len(self.output_order) != 2:
                     raise ValueError(
-                        f"Expected 2 outputs ({PREDICTIONS_NAME if self.model_orig == YOLOv5 else PREDICTIONS_ULTRALYTICS_NAME}, {PROTOS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
+                        f"Expected 2 outputs ({PREDICTIONS_NAME}, {PROTOS_NAME}) but got {len(self.output_order)} output{'s' if len(self.output_order) > 1 else ''} ({', '.join(self.output_order)})")
                 predictions_meta = self.__create_prediction_meta()
                 protos_meta = self.__create_protos_meta()
-                return [predictions_meta, protos_meta], None
+                output_map = {PREDICTIONS_NAME: predictions_meta, PROTOS_NAME: protos_meta}
+                output_metadata = [output_map[output_name] for output_name in self.output_order]
+                return output_metadata, None
 
     def __create_prediction_meta(self):
         # Creates the metadata for the predictions
         predictions_meta = _metadata_fb.TensorMetadataT()
-        predictions_meta.name = PREDICTIONS_NAME if self.model_orig == YOLOv5 else PREDICTIONS_ULTRALYTICS_NAME
+        predictions_meta.name = PREDICTIONS_NAME
         predictions_meta.description = "The predictions made by each grid cell of the model on which one needs to run NMS."
         self._add_content_feature(predictions_meta)
         self._add_stats(predictions_meta, 1.0, 0)

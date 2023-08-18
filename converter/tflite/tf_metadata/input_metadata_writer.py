@@ -20,19 +20,15 @@ class InputMetadataWriter(MetadataHelper):
     normalized: bool
         Whether the model includes normalization
 
-    quantized: bool
-        Whether the model is fully quantized (expects int8 values)
-
     multiple_inputs: bool
         Whether the model has several inputs
     """
 
-    def __init__(self, input_order: List[str], input_resolution: int, normalized: bool, quantized: bool,
+    def __init__(self, input_order: List[str], input_resolution: int, normalized: bool,
                  multiple_inputs: bool = False):
         self.input_order = input_order
         self.input_resolution = input_resolution
         self.normalized = normalized
-        self.quantized = quantized
         self.multiple_inputs = multiple_inputs
 
     def write(self) -> List[_metadata_fb.TensorMetadataT]:
@@ -63,9 +59,6 @@ class InputMetadataWriter(MetadataHelper):
         image_meta.name = IMAGE_NAME
         self._add_content_image(image_meta)
 
-        if self.quantized:
-            # Fully quantized
-            image_meta.name += QUANTIZED_SUFFIX
         if self.normalized:
             image_meta.description = (
                 f"Input image to be classified. The expected image is {self.input_resolution} x {self.input_resolution}, with "

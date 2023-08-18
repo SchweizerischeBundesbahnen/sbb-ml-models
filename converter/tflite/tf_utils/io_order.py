@@ -3,7 +3,7 @@ from typing import List
 import tensorflow as tf
 
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, BOUNDINGBOX_NAME, CLASSES_NAME, SCORES_NAME, NUMBER_NAME, \
-    PREDICTIONS_NAME, MASKS_NAME, SEGMENTATION
+    PREDICTIONS_NAME, MASKS_NAME, SEGMENTATION, PROTOS_NAME
 
 
 class IOOrder:
@@ -60,7 +60,16 @@ class IOOrder:
             except KeyError as e:
                 raise KeyError(f"{e}, the outputs are: {output_details}")
         else:
-            output_order = [PREDICTIONS_NAME]
+            if self.model_parameters.model_type == SEGMENTATION:
+                output_map ={'PartitionedCall:0': PREDICTIONS_NAME, 'PartitionedCall:1': PROTOS_NAME,
+                             'StatefulPartitionedCall:0': PREDICTIONS_NAME, 'StatefulPartitionedCall:1': PROTOS_NAME}
+                output_details = interpreter.get_output_details()
+                try:
+                    output_order = [output_map[output['name']] for output in output_details]
+                except KeyError as e:
+                    raise KeyError(f"{e}, the outputs are: {output_details}")
+            else:
+                output_order = [PREDICTIONS_NAME]
         return output_order
 
     def get_input_order(self, interpreter) -> List[str]:

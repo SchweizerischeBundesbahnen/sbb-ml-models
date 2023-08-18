@@ -43,6 +43,7 @@ def plot_masks(img_size, img_origs, yxyxs, classes, scores, masks, nb_detecteds,
 
     line_thickness = int(round(0.0005 * (orig_h + orig_w) / 2) + 1)
     annotator = Annotator(img_orig, line_width=line_thickness, example=str(classes))
+
     # Plot the masks
     annotator.masks(masks, colors=[(56, 56, 255) for _ in range(nb_detected)])
 

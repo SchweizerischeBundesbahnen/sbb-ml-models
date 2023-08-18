@@ -44,6 +44,7 @@ def main():
     parser.add_argument('--no-nms', action='store_true', help='If set, NMS is not added at the end of the model.')
     parser.add_argument('--no-normalization', action='store_true',
                         help='If set, normalization is not added at the beginning of the model.')
+    parser.add_argument('--overwrite', action='store_true', help='If set, overwrites already converted model if it exists.')
 
     opt = parser.parse_args()
 
@@ -54,7 +55,8 @@ def main():
 
     converter = PytorchToTFConverter(model_input_path=opt.model_input_path,
                                      model_parameters=model_parameters,
-                                     conversion_parameters=conversion_parameters)
+                                     conversion_parameters=conversion_parameters,
+                                     overwrite=opt.overwrite)
 
     converter.convert()
 

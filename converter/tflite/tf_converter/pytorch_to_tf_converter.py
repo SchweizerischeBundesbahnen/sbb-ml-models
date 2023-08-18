@@ -8,7 +8,7 @@ from pytorch_utils.pytorch_loader import PyTorchModelLoader
 from tf_converter.keras_to_tflite_converter import KerasToTFLiteConverter
 from tf_model.keras_model import KerasModel
 from tf_utils.parameters import ModelParameters, ConversionParameters
-
+import os
 
 class PytorchToTFConverter:
     """ Class to convert a Pytorch model to a Keras model, saved as saved_model or TFLite
@@ -26,19 +26,24 @@ class PytorchToTFConverter:
 
     conversion_parameters: ConversionParameters
         The parameters for the conversion (e.g. quantization types, ...)
+
+    overwrite: bool
+        Whether to overwrite existing converted model
     """
 
     def __init__(self,
                  model_input_path: str,
                  model_output_path: str = None,
                  model_parameters: ModelParameters = ModelParameters(),
-                 conversion_parameters: ConversionParameters = ConversionParameters()):
+                 conversion_parameters: ConversionParameters = ConversionParameters(),
+                 overwrite: bool = False):
         logging.basicConfig(format='%(asctime)s %(message)s', datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
         self.model_input_path = Path(model_input_path)
         self.model_output_path = Path(model_output_path) if model_output_path else Path(
             model_input_path.replace(PT_SUFFIX, ''))
         self.model_parameters = model_parameters
         self.conversion_parameters = conversion_parameters
+        self.overwrite = overwrite
 
         self.__check_input_create_output()
         self.__init_pytorch_model()
@@ -75,6 +80,10 @@ class PytorchToTFConverter:
     def __convert_tflite(self):
         converted_model_paths = self.__get_converted_model_paths()
 
+        if len(converted_model_paths) == 0:
+            logging.info(f'{BLUE}The model has already been converted (use --overwrite to overwrite it).{END_COLOR}')
+            exit(0)
+
         logging.info(f'{BLUE}Starting TFLite export with TensorFlow {tf.__version__}...{END_COLOR}')
         # Create Keras model
         keras_model = self.__create_keras_model()
@@ -95,23 +104,31 @@ class PytorchToTFConverter:
     def __get_converted_model_paths(self):
         # Get the names of the convert models
         model_output_paths = []
+        already_done = []
         for quantization_type in self.conversion_parameters.quantization_types:
             model_output_path = self.__get_converted_model_path(quantization_type)
+            if os.path.exists(model_output_path) and not self.overwrite:
+                logging.info(f"{BLUE}Converted model ({model_output_path}) already exists.{END_COLOR}")
+                already_done.append(quantization_type)
+            else:
+                model_output_paths.append(model_output_path)
+        for ad in already_done:
+            self.conversion_parameters.quantization_types.remove(ad)
 
-            model_output_paths.append(model_output_path)
         return model_output_paths
 
     def __get_converted_model_path(self, quantization_type: str = ''):
         # Basename (given as input)
         basename = str(self.model_output_path)
 
-        # Specify if it does not includ normalization or nms
+        # Specify if it does not include normalization or nms
         if not self.model_parameters.include_normalization:
             basename += '_no-norm'
         if not self.model_parameters.include_nms:
             basename += '_no-nms'
+
         # Add img size and type
-        basename += f'_{self.model_parameters.input_resolution}_{self.model_parameters.model_type}'
+        basename += f'_{self.model_parameters.input_resolution}'
 
         # Add quantization type
         if quantization_type == INT8:
@@ -122,5 +139,4 @@ class PytorchToTFConverter:
             basename += FULLINT8_SUFFIX
         elif quantization_type == FLOAT32:
             basename += FLOAT32_SUFFIX
-
         return Path(basename + TFLITE_SUFFIX)

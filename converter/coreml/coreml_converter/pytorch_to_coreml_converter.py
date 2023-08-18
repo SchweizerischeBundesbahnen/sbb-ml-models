@@ -62,11 +62,7 @@ class PytorchToCoreMLConverter:
         Converts a PyTorch model to a CoreML model and saves it
         """
         # Export the model
-        output_path = f'{str(self.model_output_path)}_{self.input_resolution}'
-        if self.model_parameters.model_type == DETECTION:
-            self.file_name = output_path + "_detection"
-        else:
-            self.file_name = output_path + "_segmentation"
+        self.output_path = f'{str(self.model_output_path)}_{self.input_resolution}'
 
         # For segmentation, we need to add the export layer
         if self.model_parameters.model_type == SEGMENTATION:
@@ -85,7 +81,6 @@ class PytorchToCoreMLConverter:
             Path(converted_model_path).unlink()
 
         self.__dry_run(model)
-        self.__set_metadata(model)
         self.__export_with_quantization(model)
 
     def __dry_run(self, model):
@@ -103,15 +98,22 @@ class PytorchToCoreMLConverter:
         except Exception as e:
             raise Exception(f'{RED}Could not use the model for inference:{END_COLOR} {e}')
 
-    def __set_metadata(self, model):
+    def __set_metadata(self, model, inputs, outputs, quantization_type):
         # Set the model metadata
-        model.short_description = self.pt_model.model_parameters.metadata.pop('description')
-        model.author = self.pt_model.model_parameters.metadata.pop('author')
-        model.license = self.pt_model.model_parameters.metadata.pop('license')
-        model.version = self.pt_model.model_parameters.metadata.pop('version')
-        model.user_defined_metadata.update({k: str(v) for k, v in self.pt_model.model_parameters.metadata.items()})
+        metadata = self.pt_model.model_parameters.metadata.copy()
+        model.short_description = metadata.pop('description')
+        model.author = metadata.pop('author')
+        model.license = metadata.pop('license')
+        model.version = metadata.pop('version')
+        model.user_defined_metadata.update({'input_names': str(inputs),
+                         'output_names': str(outputs),
+                         'quantization_type': quantization_type})
+        model.user_defined_metadata.update({k: str(v) for k, v in metadata.items()})
 
     def __export_with_quantization(self, model):
+        spec = model.get_spec()
+        inputs = [input.name for input in spec.description.input]
+        outputs = [output.name for output in spec.description.output]
         for quantization_type in self.quantization_types:
             try:
                 logging.info(f'{BLUE}Exporting model to CoreML {quantization_type}{END_COLOR}')
@@ -128,8 +130,8 @@ class PytorchToCoreMLConverter:
                         model, nbits=8)
                 else:
                     raise ValueError(f"The quantization type '{quantization_type}' is not supported.")
-                converted_model_path = Path(self.file_name + suffix + COREML_SUFFIX)
-
+                self.__set_metadata(model_temp, inputs, outputs, quantization_type)
+                converted_model_path = Path(self.output_path + suffix + COREML_SUFFIX)
                 model_temp.save(converted_model_path)
                 logging.info(f'{GREEN}CoreML export success:{END_COLOR} saved as {converted_model_path}')
             except Exception as e:

@@ -52,7 +52,10 @@ class PyTorchModelLoader:
         except:
             self.torch_model = self.attempt_load(self.model_input_path)
         if isinstance(self.torch_model.names, list):
-            self.torch_model.names = {i: name for i, name in enumerate(self.torch_model.names)}
+            self.torch_model.names = {i: name.encode().decode('ascii', 'ignore') for i, name in enumerate(self.torch_model.names)}
+        else:
+            self.torch_model.names = {i: name.encode().decode('ascii', 'ignore') for i, name in
+                                      enumerate(self.torch_model.names.values())}
 
     def __dry_run(self):
         self.torch_model.eval()  # Will return predictions, model outputs
@@ -89,7 +92,11 @@ class PyTorchModelLoader:
             'stride': int(max(self.torch_model.stride)),
             'task': self.model_parameters.model_type,
             'imgsz': self.model_parameters.input_resolution,
-            'names': self.torch_model.names}
+            'names': self.torch_model.names,
+            'normalized': self.model_parameters.include_normalization,
+            'max_det': self.model_parameters.max_det,
+            'nms': self.model_parameters.include_nms
+        }
 
     def attempt_load(self, weights, device=None, inplace=True, fuse=True):
         # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a

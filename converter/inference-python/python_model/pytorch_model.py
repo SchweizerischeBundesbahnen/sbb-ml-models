@@ -7,63 +7,31 @@ from pytorch_utils.pytorch_loader import PyTorchModelLoader
 from pytorch_utils.pytorch_nms import YoloNMS
 from utils.segment.general import process_mask
 from tf_utils.parameters import ModelParameters
+from python_model.inference_model_abs import InferenceModelAbs
 
-
-class PyTorchModel:
+class PyTorchModel(InferenceModelAbs):
     """ Class to load a PyTorch model and run inference
 
-    Attributes
-    ----------
-    model_path: str
-        The path to the PyTorch model
+        Attributes
+        ----------
+        model_path: str
+            The path to the PyTorch model
 
-    input_resolution: int
-        The input resolution for the input to the model
+        input_resolution: int
+            The input resolution for the input to the model
     """
 
     def __init__(self, model_path, input_resolution=DEFAULT_INPUT_RESOLUTION):
         logging.info("- Initializing PyTorch model...")
         model_parameters = ModelParameters(input_resolution=input_resolution)
-        self.model = PyTorchModelLoader(model_path, model_parameters).load(fuse=True)
+        self.pt_model = PyTorchModelLoader(model_path, model_parameters).load(fuse=True)
 
-        # Load labels
-        self.labels = self.model.class_labels
-
+        self.__load_metadata()
         self.img_size = (input_resolution, input_resolution)
         logging.info(f"- There are {len(self.labels)} labels.")
 
-    def get_input_info(self):
-        """
-        Returns the information about the input
-
-        Returns
-        ----------
-        normalized, img size, batch size, PIL image, channel first
-            Information about the input
-        """
-        return False, self.img_size, BATCH_SIZE, False, True
-
     def predict(self, img, iou_threshold, conf_threshold):
-        """
-        Runs the inference
-
-        Parameters
-        ----------
-        img: torch.Tensor
-            The input image
-
-        iou_threshold: float
-            The IoU threshold
-
-        conf_threshold: float
-            The confidence threshold
-
-        Returns
-        ----------
-        yxyx, classes, scores, masks, nb_detected
-            The detections made by the model
-        """
-        model = YoloNMS(self.model, iou_thres=iou_threshold, conf_thres=conf_threshold)
+        model = YoloNMS(self.pt_model, iou_thres=iou_threshold, conf_thres=conf_threshold)
 
         (yxyx, classes, scores, masks), protos = model(img)
 
@@ -79,3 +47,14 @@ class PyTorchModel:
         yxyx /= self.img_size[0]
 
         return yxyx, classes, scores, masks, torch.Tensor([nb_detected])
+
+    def __load_metadata(self):
+        self.do_normalize = False
+        self.do_nms = True
+        self.batch_size = BATCH_SIZE
+        self.pil_image = False
+        self.channel_first = True
+        self.labels = self.pt_model.torch_model.names
+        self.model_type = self.pt_model.model_parameters.model_type
+        self.input_names = []
+        self.output_names = []

@@ -64,6 +64,7 @@ class NMS:
         """
         predictions = model_output[0]
         protos = model_output[1]
+
         yxyx, classes, scores, nb_detected = self.__nms_simple(predictions[0], nc)
 
         if self.model_orig == ULTRALYTICS:
