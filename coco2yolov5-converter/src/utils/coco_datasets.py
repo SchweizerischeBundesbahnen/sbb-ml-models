@@ -1,10 +1,5 @@
-import argparse
 import kwcoco
 import logging
-import os
-import shutil
-import shutil
-import sys
 from pathlib import Path
 from random import random
 import yaml

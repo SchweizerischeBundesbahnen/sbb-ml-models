@@ -46,7 +46,7 @@ class Coco2YoloDatasetConverter:
         logging.info(f"\033[32mConversion success\033[0m: saved in {self.yolo_output_folder}")
 
         logging.info(
-            f"- The dataset contains {len(list(Path(yolo_dataset.image_train).glob('**/*')))} images in train and {len(list(Path(yolo_dataset.image_val).glob('**/*')))} images in val")
+            f"- The dataset contains {len([x for x in list(Path(yolo_dataset.image_train).glob('**/*')) if x.is_file()])} images in train and {len([x for x in list(Path(yolo_dataset.image_val).glob('**/*')) if x.is_file()])} images in val")
         logging.info(f"- There are {len(valid_labels)} labels")
 
 

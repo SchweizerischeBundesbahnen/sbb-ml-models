@@ -46,9 +46,9 @@ class YoloDataset:
             self.path / config_file, new_format)
 
     def create(self, coco, images_basedir, valid_labels, labels_to_fusion):
-        nb_train = 0
-        nb_val = 0
-        nb_ignored = 0
+        self.nb_train = 0
+        self.nb_val = 0
+        self.nb_ignored = 0
         # Consider all images
         for image_id in coco.imgs:
             file_name = coco.imgs[image_id]["file_name"]
@@ -67,16 +67,16 @@ class YoloDataset:
                     self.__convert_coco_for_detection(coco, aid, annotation_name, image_id, yolo_labels, valid_labels, labels_to_fusion)
 
             if len(yolo_labels) != 0:
-                images_out_folder, labels_out_folder, nb_train, nb_val = self.__get_out_folders(nb_train, nb_val)
-                self.__copy_image(file_name, image_path, images_out_folder)
+                images_out_folder, labels_out_folder, isTrain = self.__get_out_folders()
+                self.__copy_image(file_name, image_path, images_out_folder, isTrain)
                 self.__write_label(file_name, labels_out_folder, yolo_labels)
             else:
-                nb_ignored += 1
+                self.nb_ignored += 1
                 print(f"{file_name} has no annotations.")
 
-        logging.info(f"- {nb_train} images are copied into train")
-        logging.info(f"- {nb_val} images are copied into val")
-        logging.info(f"- {nb_ignored} images are ignored")
+        logging.info(f"- {self.nb_train} images are copied into train")
+        logging.info(f"- {self.nb_val} images are copied into val")
+        logging.info(f"- {self.nb_ignored} images are ignored")
 
     def __convert_coco_for_detection(self, coco, aid, annotation_name, image_id, yolo_labels, valid_labels, labels_to_fusion):
         img_width = coco.imgs[image_id].get("width", 0)  # optional
@@ -101,14 +101,17 @@ class YoloDataset:
             annotation_index = valid_labels.index(label)
             yolo_labels.append([x for x in [annotation_index] + masks[0]])
 
-    def __copy_image(self, file_name, image_path, images_out_folder):
+    def __copy_image(self, file_name, image_path, images_out_folder, isTrain):
         # TODO: use symlink instead?
         try:
             os.makedirs(os.path.dirname(images_out_folder / file_name), exist_ok=True)
             shutil.copyfile(image_path, images_out_folder / file_name)
+            if isTrain:
+                self.nb_train += 1
+            else:
+                self.nb_val += 1
         except FileNotFoundError:
             logging.info(f"\033[31mConversion error:\033[0m the image ({image_path}) does not exist.")
-            exit(1)
 
     def __write_label(self, file_name, labels_out_folder, yolo_labels):
         txt_file_name = Path(file_name).with_suffix(".txt")
@@ -116,14 +119,14 @@ class YoloDataset:
         TxtUtil.write_labels_txt_file(
             yolo_labels, labels_out_folder / txt_file_name)
 
-    def __get_out_folders(self, nb_train, nb_val):
+    def __get_out_folders(self):
         # Determine whether to add it to train or val
         if random() < self.dataset_split_pivot:
             images_out_folder = self.image_train
             labels_out_folder = self.label_train
-            nb_train += 1
+            isTrain = True
         else:
             images_out_folder = self.image_val
             labels_out_folder = self.label_val
-            nb_val += 1
-        return images_out_folder, labels_out_folder, nb_train, nb_val
+            isTrain = False
+        return images_out_folder, labels_out_folder, isTrain
