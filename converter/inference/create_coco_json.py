@@ -12,7 +12,7 @@ from utils.datasets import LoadImages
 from constants import RED, DEFAULT_INPUT_RESOLUTION, END_COLOR, BLUE, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, \
     NORMALIZATION_FACTOR
 from coordinates import pt_yxyx2xywh_coco, pt_normalize_xywh
-from python_model.pytorch_model import PyTorchModel
+from inference.python_model.pytorch_model import PyTorchModel
 from python_utils.plots import scale_coords_yolo, plot_boxes_xywh
 
 

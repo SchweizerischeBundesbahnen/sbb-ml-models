@@ -1,15 +1,14 @@
 import logging
-import ast
 import torch
 from coremltools.models.model import MLModel
 from helpers.coordinates import pt_yxyx2xyxy_yolo
 from helpers.constants import BATCH_SIZE, IMAGE_NAME, IOU_NAME, CONF_NAME, CONFIDENCE_NAME, COORDINATES_NAME, \
-    MASKS_NAME, NUMBER_NAME, PREDICTIONS_NAME, PROTOS_NAME, ULTRALYTICS, DETECTION, SEGMENTATION
+    MASKS_NAME, NUMBER_NAME, PROTOS_NAME, ULTRALYTICS, DETECTION, SEGMENTATION
 from pytorch_utils.pytorch_nms import pt_xywh2yxyx_yolo
-from python_model.inference_model_abs import InferenceModelAbs
+from python_model.inference_model import InferenceModel
 from pytorch_utils.pytorch_nms import YoloNMS
 
-class CoreMLModel(InferenceModelAbs):
+class CoreMLModel(InferenceModel):
     """ Class to load a CoreML model and run inference
 
         Attributes
@@ -21,6 +20,7 @@ class CoreMLModel(InferenceModelAbs):
         logging.info("- Initializing CoreML model...")
         self.model = MLModel(model_path)
         self.__load_metadata()
+        super().__init__(model_path)
 
     def predict(self, img, iou_threshold, conf_threshold):
         if self.do_nms:
@@ -74,7 +74,7 @@ class CoreMLModel(InferenceModelAbs):
 
         self.model_type = metadata['task']
         self.model_orig = ULTRALYTICS if self.model_type == DETECTION else metadata['orig'] # Conversion with ultralytics change output shapes.
-        self.labels = ast.literal_eval(metadata['names'])
+        self.labels = metadata['names'].split(',')
         self.do_normalize = False
         self.do_nms = False if metadata['nms'] == 'True' else True
         self.quantization_type = metadata['quantization_type']

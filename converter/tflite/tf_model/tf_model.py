@@ -9,7 +9,7 @@ from helpers.constants import NB_CHANNEL, DEFAULT_CONF_THRESHOLD, SEGMENTATION, 
     DEFAULT_IOU_THRESHOLD, YOLOv5, NORMALIZATION_FACTOR, BLUE, RED, END_COLOR
 from models.tf import parse_model
 from tf_model.tf_nms import NMS
-from tf_utils.parameters import ModelParameters
+from helpers.parameters import ModelParameters
 from ultralytics.engine.model import Model
 
 

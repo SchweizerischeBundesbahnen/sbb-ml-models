@@ -2,8 +2,8 @@
 
 ## YOLOv5 (PyTorch) to ONNX format conversion
 
-**Supported models**: The conversion is supported for models of Yolov5 v4.0 and v5.0 with size S, S6, M, M6, L, L6 and X, X6, as well as N, N6 for v6.0.
-The detection Yolov5 models is supported; the classification and segmentation model are not.
+**Supported models**: The conversion is supported for models of Yolov5 and Yolov8 with all sizes.
+The detection and segmentation Yolov5 and Yolov8 models are both supported; the classification or pose models are not.
 
 **Supported types**: The converter supports the 3 types, float32, float16 int8.
 
@@ -21,16 +21,14 @@ Use:
 
 ```bash
 python onnx/convert.py \
-    --model PATH_TO_PT_MODEL \
-    --out PATH_TO_OUTPUT_DIR \
-    --output-name CONVERTED_MODEL_NAME \
-    --input-resolution INPUT_RESOLUTION \
+    --model path/to/model.pt \
+    --input-resolution 640 \
     --quantize-model float32 float16 int8 \
     --iou-threshold 0.45 \
     --conf-threshold 0.25
     
 ```
-- The conversion script takes the PyTorch model as input (`--model`), the directory in which to save the converted model, as well as its name (`--out`and `--output-name`), i.e. the line above will produce models named `CONVERTED_MODEL_NAME.onnx`.
+- The conversion script takes the PyTorch model as input (`--model`), the directory in which to save the converted model, as well as its name (`--out`and `--output-name`), i.e. the line above will produce models named `path/to/model_640_float32.onnx` as well as the models with float16 and int8.
 - By default, the input resolution is 640 and the model is converted only in float32.
 - The model does not support thresholds as inputs. Thus, the input to the model is only an image with 0-255 values.
 - The output contains the bounding box coordinates and the class and score of each box.
@@ -53,9 +51,10 @@ Labels:
 * They are included in the converted model, as metadata.
 
 ```python
+import ast
 import onnx
 
-model = onnx.load("path_to_the_onnx_model")
+model = onnx.load("path/to/model.onnx")
 metadata = model.metadata_props
-labels = metadata[0].value.split(',')
+labels = [ast.literal_eval(m.value) for m in metadata if m.key == 'names'][0]
 ```

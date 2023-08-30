@@ -20,19 +20,13 @@ class RepresentativeDatasetGenerator:
 
     conversion_parameters: ConversionParameters
         The parameters for the conversion (e.g. quantization types, ...)
-
-    iou_threshold: float
-        The IoU threshold
-
-    conf_threshold: float
-        The confidence threshold
     """
 
-    def __init__(self, model_parameters, conversion_parameters, iou_threshold, conf_threshold):
+    def __init__(self, model_parameters, conversion_parameters):
         self.model_parameters = model_parameters
         self.conversion_parameters = conversion_parameters
-        self.iou_threshold = iou_threshold
-        self.conf_threshold = conf_threshold
+        self.iou_threshold = self.conversion_parameters.iou_threshold
+        self.conf_threshold = self.conversion_parameters.conf_threshold
 
     def generate(self):
         """ Generates a representative dataset from the source dataset

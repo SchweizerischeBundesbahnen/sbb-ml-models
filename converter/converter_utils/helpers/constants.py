@@ -9,6 +9,11 @@ import os
 DATA_DIR = os.path.join('data')
 OUTPUT_DIR = os.path.join(DATA_DIR, 'output')
 
+TFLITE = 'tflite'
+COREML = 'coreml'
+ONNX = 'onnx'
+PYTORCH = 'pytorch'
+
 FLOAT32 = 'float32'
 FLOAT16 = 'float16'
 INT8 = 'int8'
@@ -80,9 +85,9 @@ BOUNDINGBOX_NAME = 'location'  # (y1, x1, y2, x2)
 CLASSES_NAME = 'category'  # class index
 SCORES_NAME = 'score'  # confidence score
 
-NUMBER_NAME = 'number of detections'  # number of detected object in the image
+NUMBER_NAME = 'numberDetections'  # number of detected object in the image
 MASKS_NAME = 'masks'  # masks for segmentation
-DETECTIONS_NAME = 'detection results'
+DETECTIONS_NAME = 'detectionResults'
 PREDICTIONS_NAME = 'predictions'  # For (batch_size, num_boxes, num_classes + 5 + num_masks) / (batch_size, num_classes + 4 + num_masks, num_boxes)
 PROTOS_NAME = 'protos'
 

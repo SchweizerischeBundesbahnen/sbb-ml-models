@@ -1,8 +1,8 @@
 from typing import List
 
 from helpers.constants import DEFAULT_INPUT_RESOLUTION, DEFAULT_SOURCE_DATASET, DEFAULT_NB_CALIBRATION, \
-    DEFAULT_MAX_NUMBER_DETECTION, FLOAT32, FLOAT16, INT8, \
-    FULLINT8, BAHNHOF, WAGEN, TRAKTION, DETECTION, SEGMENTATION, UNKNOWN
+    DEFAULT_MAX_NUMBER_DETECTION, DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, FLOAT32, FLOAT16, INT8, \
+    BAHNHOF, WAGEN, TRAKTION, DETECTION, SEGMENTATION, UNKNOWN
 
 
 class ModelParameters:
@@ -70,13 +70,15 @@ class ConversionParameters:
                  write_metadata: bool = True,
                  use_representative_dataset: bool = False,
                  source: str = DEFAULT_SOURCE_DATASET,
-                 nb_calib: int = DEFAULT_NB_CALIBRATION):
+                 nb_calib: int = DEFAULT_NB_CALIBRATION,
+                 iou_threshold=DEFAULT_IOU_THRESHOLD,
+                 conf_threshold=DEFAULT_CONF_THRESHOLD):
         if quantization_types is None:
             quantization_types = [FLOAT32]
         for quantization_type in quantization_types:
-            if quantization_type not in [FLOAT32, FLOAT16, INT8, FULLINT8]:
+            if quantization_type not in [FLOAT32, FLOAT16, INT8]:
                 raise ValueError(
-                    f"Quantization option '{quantization_type}' not recognized: must be one of '{FLOAT32}', '{FLOAT16}', '{INT8}', '{FULLINT8}'.")
+                    f"Quantization option '{quantization_type}' not recognized: must be one of '{FLOAT32}', '{FLOAT16}', '{INT8}'.")
         self.quantization_types = quantization_types
         self.write_metadata = write_metadata
         self.use_representative_dataset = use_representative_dataset
@@ -84,3 +86,5 @@ class ConversionParameters:
             raise ValueError(f"Source '{source}' not recognized: must be one of '{BAHNHOF}', '{WAGEN}', '{TRAKTION}'.")
         self.source = source
         self.nb_calib = nb_calib
+        self.iou_threshold = iou_threshold
+        self.conf_threshold = conf_threshold

@@ -4,10 +4,10 @@ import tempfile
 from pathlib import Path
 from typing import List
 
-from helpers.constants import FULLINT8, METADATA_FILE_NAME, SEGMENTATION, RED, END_COLOR, BLUE, GREEN
+from helpers.constants import METADATA_FILE_NAME, SEGMENTATION, RED, END_COLOR, BLUE, GREEN
+from helpers.parameters import ModelParameters
 from tf_metadata.input_metadata_writer import InputMetadataWriter
 from tf_metadata.output_metadata_writer import OutputMetadataWriter
-from tf_utils.parameters import ModelParameters
 from tflite_support import flatbuffers
 from tflite_support import metadata as _metadata
 from tflite_support import metadata_schema_py_generated as _metadata_fb
@@ -79,7 +79,8 @@ class MetadataWriter:
     def __create_associated_files(self):
         # Create the labels file
         self.metadata_path = self.tmp_dir_path / METADATA_FILE_NAME
-        self.metadata.update({'input_names': self.input_order, 'output_names': self.output_order, 'quantization_type': self.quantization_type})
+        self.metadata.update({'input_names': self.input_order, 'output_names': self.output_order,
+                              'quantization_type': self.quantization_type})
         with self.metadata_path.open('w') as f:
             f.write(str(self.metadata))
 

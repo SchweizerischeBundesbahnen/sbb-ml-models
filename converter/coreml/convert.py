@@ -50,6 +50,7 @@ from argparse import ArgumentParser
 
 from helpers.constants import DEFAULT_INPUT_RESOLUTION, \
     DEFAULT_QUANTIZATION_TYPE, DEFAULT_MAX_NUMBER_DETECTION
+from helpers.parameters import ModelParameters, ConversionParameters
 
 from coreml_converter.pytorch_to_coreml_converter import PytorchToCoreMLConverter
 
@@ -64,11 +65,17 @@ def main():
                         help=f"Quantization: 'int8', 'float16' or 'float32' for no quantization. Default: [{DEFAULT_QUANTIZATION_TYPE}]")
     parser.add_argument('--max-det', type=int, default=DEFAULT_MAX_NUMBER_DETECTION,
                         help=f'The maximum number of detections. Default: {DEFAULT_MAX_NUMBER_DETECTION}.')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='If set, overwrites already converted model if it exists.')
     opt = parser.parse_args()
 
+    model_parameters = ModelParameters(input_resolution=opt.input_resolution, max_det=opt.max_det)
+    conversion_parameters = ConversionParameters(quantization_types=opt.quantization_types)
+
     converter = PytorchToCoreMLConverter(model_input_path=opt.model_input_path,
-                                         quantization_types=opt.quantization_types,
-                                         input_resolution=opt.input_resolution, max_det=opt.max_det)
+                                         model_parameters=model_parameters,
+                                         conversion_parameters=conversion_parameters,
+                                         overwrite=opt.overwrite)
     converter.convert()
 
 

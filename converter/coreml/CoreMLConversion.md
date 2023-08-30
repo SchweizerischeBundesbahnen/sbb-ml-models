@@ -11,9 +11,8 @@ The modified code **DOES NOT** fall under the Apache 2.0 license.
 
 Also refer to coreml/README-original.md for further information about the original source code by DB Systel GmbH.
 
-**Supported models**: The conversion is supported for models of Yolov5 v4.0, v5.0, v6.0, v6.1, v6.2 and v7.0 with all
-sizes.
-The detection and segmentation Yolov5 models are both supported; the classification model is not.
+**Supported models**: The conversion is supported for models of Yolov5 and Yolov8 with all sizes.
+The detection and segmentation Yolov5 and Yolov8 models are both supported; the classification or pose models are not.
 
 **Supported types**: The converter supports the 3 types, float32, float16 and int8.
 
@@ -38,17 +37,16 @@ Use:
 
 ```bash
 python coreml/convert.py \
-    --model PATH_TO_PT_MODEL \
-    --out PATH_TO_OUTPUT_DIR \
-    --output-name CONVERTED_MODEL_NAME \
-    --input-resolution INPUT_RESOLUTION \
+    --model path/to/model.pt \
+    --input-resolution 640 \
     --quantize-model float32 float16 int8 \
-    --max-det MAX_DET
+    --max-det MAX_DET \
+    --overwrite
 ```
 
 - The conversion script takes the PyTorch model as input (`--model`), the directory in which to save the converted
   model, as well as its name (`--out`and `--output-name`), i.e. the line above will produce the
-  model `PATH_TO_OUTPUT_DIR/CONVERTED_MODEL_NAME.mlmodel`.
+  model `path/to/model_640_float32.mlmodel` as well as the ones with float16 and int8.
 - By default, the input resolution is 640 and the model is converted only in float32.
 - NMS and normalization are included into the converted model. Thus, the input to the model is an image with [0-255]
   values as well as the IoU and confidence thresholds. The output contains the bounding box coordinates and the
@@ -60,8 +58,8 @@ python coreml/convert.py \
 Input:
 
 * **image**: an image, the input image which must be square (INPUT_RESOLUTION x INPUT_RESOLUTION) (required)
-* **iou threshold**: a double, the IoU threshold used during NMS (Default: 0.45)
-* **confidence threshold**: a double, the confidence threshold used during NMS (Default: 0.25)
+* **iouThreshold**: a double, the IoU threshold used during NMS (Default: 0.45)
+* **confidenceThreshold**: a double, the confidence threshold used during NMS (Default: 0.25)
 
 Output:
 
@@ -69,26 +67,13 @@ Output:
 * **coordinates**: The coordinates for each detected box (NB_DETECTIONS x [x center, y center, width, height]). The
   coordinates are relative to the image size.
 
-Labels:
-
-* For the detection model, the labels are contained in the model (e.g. we used built-in NMS function),
-  they can be found in the specifications of the model:
-
-```python
-from coremltools.models.model import MLModel
-
-coreml_model = model = MLModel("path_to_the_coreml_model")
-spec = coreml_model.get_spec()
-labels = [label.rstrip() for label in spec.pipeline.models[-1].nonMaximumSuppression.stringClassLabels.vector]
-```
-
 ### YoloV5 CoreML Model for Segmentation
 
 Input:
 
 * **image**: an image, which must be square (INPUT_RESOLUTION x INPUT_RESOLUTION) (required)
-* **iou threshold**: an array, the IoU threshold used during NMS (Default: [0.45])
-* **confidence threshold**: an array, the confidence threshold used during NMS (Default: [0.25])
+* **iouThreshold**: an array, the IoU threshold used during NMS (Default: [0.45])
+* **confidenceThreshold**: an array, the confidence threshold used during NMS (Default: [0.25])
 
 Output:
 
@@ -96,18 +81,18 @@ Output:
 * **coordinates**: The coordinates for each detected box (NB_DETECTIONS x [x center, y center, width, height]). The
   coordinates are relative to the image size.
 * **masks**: The masks for the segmentation for each detected box (NB_DETECTIONS x INPUT_RESOLUTION x INPUT_RESOLUTION)
-* **number of detections**: The number of detected boxes
+* **numberDetections**: The number of detected boxes
 
 Labels:
 
-* For the segmentation model, the labels are also contained in the model.
-  At the moment, they are in the description of the masks, as we have not yet figured out how to include them in a
-  proper way.
+* The labels can be found in the metadata of the model.
 
 ```python
+import ast
 from coremltools.models.model import MLModel
 
-coreml_model = model = MLModel("path_to_the_coreml_model")
-spec = coreml_model.get_spec()
-labels = spec.description.output[-1].shortDescription.split(',')
+model = MLModel("path/to/model.mlmodel")
+metadata = model.user_defined_metadata
+labels = ast.literal_eval(metadata['names'])
+
 ```

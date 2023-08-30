@@ -1,6 +1,6 @@
 import argparse
 
-from test_utils.comparison_test import ComparisonTest
+from utils_test.comparison_test import ComparisonTest
 
 
 class ModelTest:

@@ -1,15 +1,15 @@
 import logging
 
 import torch
-from helpers.constants import BATCH_SIZE, DEFAULT_INPUT_RESOLUTION, YOLOv5
+from helpers.constants import BATCH_SIZE, DEFAULT_INPUT_RESOLUTION
 from helpers.coordinates import pt_yxyx2xyxy_yolo
 from pytorch_utils.pytorch_loader import PyTorchModelLoader
 from pytorch_utils.pytorch_nms import YoloNMS
 from utils.segment.general import process_mask
-from tf_utils.parameters import ModelParameters
-from python_model.inference_model_abs import InferenceModelAbs
+from helpers.parameters import ModelParameters
+from python_model.inference_model import InferenceModel
 
-class PyTorchModel(InferenceModelAbs):
+class PyTorchModel(InferenceModel):
     """ Class to load a PyTorch model and run inference
 
         Attributes
@@ -25,10 +25,9 @@ class PyTorchModel(InferenceModelAbs):
         logging.info("- Initializing PyTorch model...")
         model_parameters = ModelParameters(input_resolution=input_resolution)
         self.pt_model = PyTorchModelLoader(model_path, model_parameters).load(fuse=True)
-
         self.__load_metadata()
         self.img_size = (input_resolution, input_resolution)
-        logging.info(f"- There are {len(self.labels)} labels.")
+        super().__init__(model_path)
 
     def predict(self, img, iou_threshold, conf_threshold):
         model = YoloNMS(self.pt_model, iou_thres=iou_threshold, conf_thres=conf_threshold)

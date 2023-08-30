@@ -13,7 +13,7 @@ from constants import RED, END_COLOR, BOLD, BLUE, PURPLE, GREEN, DEFAULT_DETECTE
 from coordinates import pt_yxyx2xyxy, pt_xywh2xyxy_yolo
 from detect import Detector, get_counter_detections
 from python_utils.plots import plot_boxes
-from test_utils.test_inference import display_detections_pytorch
+from inference.utils_test.inference_test import display_detections_pytorch
 
 
 class AccuracyTest:

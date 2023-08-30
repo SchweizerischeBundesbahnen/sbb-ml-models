@@ -136,7 +136,7 @@ class ComparisonTest:
             for c in class_labels:
                 if c not in reference_class_labels:
                     raise ValueError(
-                        f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes.")
+                        f"{RED}Model error:{END_COLOR} the reference model and compared model do not consider the same classes: {c} not in reference class labels.")
 
     def __run_inference(self, i, img_path, img, reference_img):
         img = torch.from_numpy(img)

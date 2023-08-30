@@ -80,7 +80,6 @@ class YoloNMS(nn.Module):
         return self.nms_yolov5(images_predictions, self.pt_model.model_parameters.model_orig), protos
 
     def nms_yolov5(self, images_predictions, model_orig):
-        print(images_predictions.shape)
         # YOLOV5 (1, nb predictions, 4 + 1 + nb classes + nb masks)
         # ULTRALYTICS (1, 4 + nb classes + nb masks)
         # E.g. score does not exist anymore in new one.

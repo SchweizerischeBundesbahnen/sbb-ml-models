@@ -7,7 +7,7 @@ from helpers.constants import BATCH_SIZE, NB_CHANNEL, GREEN, BLUE, \
 from models.tf import TFDetect
 from tensorflow import keras
 from tf_model.tf_model import TFModel
-from tf_utils.parameters import ModelParameters
+from helpers.parameters import ModelParameters
 
 
 class KerasModel:

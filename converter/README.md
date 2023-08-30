@@ -21,9 +21,9 @@ here: https://github.com/ultralytics/yolov5/issues/6948#issuecomment-1075528897
 # Conversion Yolov5 (Pytorch)
 
 This repo supports the conversion of the Yolov5 model (PyTorch) to CoreML, TFLite and ONNX, with some restrictions.
-- [CoreML Conversion](CoreMLConversion.md)
-- [TFLIte Conversion](TFLiteConversion.md)
-- [ONNX Conversion](ONNXConversion.md)
+- [CoreML Conversion](coreml/CoreMLConversion.md)
+- [TFLIte Conversion](tflite/TFLiteConversion.md)
+- [ONNX Conversion](onnx/ONNXConversion.md)
 
 # Inference with Python
 
@@ -31,7 +31,7 @@ This code demonstrates inference using a converted YOLOv5 model using Python.
 Use:
 
 ```bash
-python inference-python/detect.py --model PATH_TO_CONVERTED_MODEL \
+python inference/detect.py --model PATH_TO_CONVERTED_MODEL \
 --img-dir PATH_TO_IMG_DIR \
 --max-img MAX_IMG \
 --out OUT_PATH \
@@ -56,7 +56,7 @@ Once converted, the model can be tested.
 Use:
 
 ```bash
-python inference-python/test_model.py --model PATH_TO_CONVERTED_MODEL \
+python inference/compare_model.py --model PATH_TO_CONVERTED_MODEL \
 --reference-model PATH_TO_REFERENCE_MODEL \
 --img-dir PATH_TO_IMG_DIR \
 --verbose

@@ -8,20 +8,47 @@ import PIL
 import cv2
 import numpy as np
 import torch
-from python_model.inference_model import InferenceModel
 from helpers.constants import DEFAULT_IOU_THRESHOLD, DEFAULT_CONF_THRESHOLD, DETECTION_IMAGE_DIR, \
-    DEFAULT_INPUT_RESOLUTION, RED, BLUE, END_COLOR, NORMALIZATION_FACTOR, SEGMENTATION_IMAGE_DIR, SEGMENTATION
-from python_utils.plots import plot_boxes, plot_masks
+    RED, BLUE, BOLD, END_COLOR, NORMALIZATION_FACTOR, SEGMENTATION_IMAGE_DIR, SEGMENTATION, \
+    TFLITE, ONNX, COREML, PYTORCH, TFLITE_SUFFIX, ONNX_SUFFIX, COREML_SUFFIX, PT_SUFFIX
+from tqdm import tqdm
 from utils.dataloaders import LoadImages
 
-IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']
+from python_model.coreml_model import CoreMLModel
+from python_model.onnx_model import ONNXModel
+from python_model.pytorch_model import PyTorchModel
+from python_model.tflite_model import TFLiteModel
+from utils_test.plots import plot_boxes, plot_masks
 
 
 class Detector:
     def __init__(self, model_path):
         logging.basicConfig(format='%(asctime)s %(message)s', datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
         self.model_path = model_path
-        self.model = InferenceModel(model_path)
+        logging.info(f'{BLUE}SETUP: finding the type of the model...{END_COLOR}')
+        try:
+            if self.model_path.endswith(TFLITE):
+                logging.info(f'- The model is a {BOLD}TFLite{END_COLOR} model.')
+                self.model = TFLiteModel(self.model_path)
+                self.prefix = TFLITE
+            elif self.model_path.endswith(COREML_SUFFIX):
+                logging.info(f'- The model is a {BOLD}CoreML{END_COLOR} model.')
+                self.model = CoreMLModel(self.model_path)
+                self.prefix = COREML
+            elif self.model_path.endswith(PT_SUFFIX):
+                logging.info(f'- The model is a {BOLD}PyTorch{END_COLOR} model.')
+                self.model = PyTorchModel(self.model_path)
+                self.prefix = PYTORCH
+            elif self.model_path.endswith(ONNX_SUFFIX):
+                logging.info(f'- The model is a {BOLD}ONNX{END_COLOR} model.')
+                self.model = ONNXModel(self.model_path)
+                self.prefix = ONNX
+            else:
+                logging.info(
+                    f"{RED}Model format not supported:{END_COLOR} {self.model_path}. Supported format: {TFLITE_SUFFIX}, {COREML_SUFFIX}, {PT_SUFFIX}, {ONNX_SUFFIX}.")
+                exit(0)
+        except ValueError as e:
+            raise ValueError(f"{RED}An error occured while initializing the model:{END_COLOR} {e}")
         self.do_normalize, self.img_size, self.batch_size, self.pil_image, self.channel_first = self.model.get_input_info()
         self.labels = self.model.get_labels()
 
@@ -58,16 +85,17 @@ class Detector:
 
         img_path = Path(img_dir)
 
-        if self.model.model.model_type == SEGMENTATION:
-            out_path = Path(SEGMENTATION_IMAGE_DIR) / self.model.prefix
+        if self.model.model_type == SEGMENTATION:
+            out_path = Path(SEGMENTATION_IMAGE_DIR) / self.prefix
         else:
-            out_path = Path(DETECTION_IMAGE_DIR) / self.model.prefix
+            out_path = Path(DETECTION_IMAGE_DIR) / self.prefix
 
         if not img_path.exists():
             logging.info(f"{RED}Directory not found:{END_COLOR} {img_dir}.")
             exit(1)
 
         dataset = LoadImages(img_dir, img_size=self.img_size, auto=False)
+        vid_path, vid_writer = None, None
 
         if not out_path.exists() and save_img:
             out_path.mkdir(exist_ok=True, parents=True)
@@ -79,14 +107,14 @@ class Detector:
         try:
             if verbose:
                 logging.info(f"{BLUE}DETECTION START{END_COLOR}")
-            for i, (img_path, img, img_orig, _, _) in enumerate(dataset):
+            for i, (img_path, img, img_orig, vid_cap, _) in tqdm(enumerate(dataset)):
                 if max_img != -1 and (i + 1) * self.batch_size > max_img:
                     break
                 img_name = Path(img_path).name
                 image_names.append(img_name)
-                if verbose:
+                if verbose and dataset.mode == 'image':
                     logging.info(
-                        f"{BLUE}Image {i + 1}:{END_COLOR} ({img_name}: {img_orig.shape[0]}x{img_orig.shape[1]})")
+                        f"\n{BLUE}Image {i + 1}:{END_COLOR} ({img_name}: {img_orig.shape[0]}x{img_orig.shape[1]})")
 
                 img = torch.from_numpy(img)
 
@@ -98,7 +126,7 @@ class Detector:
                 inference_times.append(inference_time)
 
                 # Plot the bounding box
-                if save_img or return_image:
+                if save_img:
                     if masks is None:
                         img_annotated = plot_boxes(self.img_size, [img_orig], yxyx, classes, scores, nb_detected,
                                                    self.labels)
@@ -108,14 +136,28 @@ class Detector:
                 end_plot_time = time.time()
 
                 # Save the results
-                out_path_img = str(
+                save_path = str(
                     out_path / f"{img_name.rsplit('.')[0]}_boxes_{self.model.model_name.rsplit('.')[0]}.png")
                 if save_img:
-                    cv2.imwrite(out_path_img, img_annotated)
-                if return_image:
-                    imgs_annotated.append(img_annotated)
+                    if dataset.mode == 'image':
+                        cv2.imwrite(save_path, img_annotated)
+                    else:
+                        if vid_path != save_path:  # new video
+                            vid_path = save_path
+                            if isinstance(vid_writer, cv2.VideoWriter):
+                                vid_writer.release()  # release previous video writer
+                            if vid_cap:  # video
+                                fps = vid_cap.get(cv2.CAP_PROP_FPS)
+                                w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                                h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                            else:  # stream
+                                fps, w, h = 30, img_annotated.shape[1], img_annotated.shape[0]
+                            save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
+                            vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                        vid_writer.write(img_annotated)
+
                 counter = get_counter_detections(self.labels, classes, nb_detected)
-                if verbose:
+                if verbose and dataset.mode == 'image':
                     logging.info(f"\t- {sum([v for v in counter.values()])} detected objects")
 
                     for k, v in counter.items():
@@ -123,12 +165,12 @@ class Detector:
 
                 detections.append({k: v for k, v in counter.items()})
 
-                if verbose:
+                if verbose and dataset.mode == 'image':
                     logging.info(
                         f"\t- It took {inference_time:.3f} seconds to run the inference")
                     if save_img:
                         logging.info(f"\t- It took {end_plot_time - end_time:.3f} seconds to plot the results.")
-                        logging.info(f"The output is saved in {out_path_img}.")
+                        logging.info(f"The output is saved in {save_path}.")
 
         except IndexError as e:
             raise IndexError(f"An error occured during the detection: {e}")
@@ -161,4 +203,5 @@ if __name__ == "__main__":
     opt = parser.parse_args()
 
     detector = Detector(opt.model)
-    detector.detect(img_dir=opt.img_dir, max_img=opt.max_img, iou_threshold=opt.iou_threshold, conf_threshold=opt.conf_threshold, save_img=not opt.no_save)
+    detector.detect(img_dir=opt.img_dir, max_img=opt.max_img, iou_threshold=opt.iou_threshold,
+                    conf_threshold=opt.conf_threshold, save_img=not opt.no_save)

@@ -1,4 +1,3 @@
-import ast
 import json
 import logging
 
@@ -7,12 +6,12 @@ import tensorflow as tf
 from helpers.constants import IMAGE_NAME, IOU_NAME, CONF_NAME, BOUNDINGBOX_NAME, \
     CLASSES_NAME, SCORES_NAME, NUMBER_NAME, PREDICTIONS_NAME, MASKS_NAME, \
     DEFAULT_MAX_NUMBER_DETECTION, PROTOS_NAME, SEGMENTATION, BLUE, END_COLOR
-from python_model.inference_model_abs import InferenceModelAbs
+from python_model.inference_model import InferenceModel
 from tf_model.tf_nms import NMS
 from tflite_support import metadata as _metadata
 
 
-class TFLiteModel(InferenceModelAbs):
+class TFLiteModel(InferenceModel):
     """ Class to load a TFLite model and run inference
 
         Attributes
@@ -21,13 +20,12 @@ class TFLiteModel(InferenceModelAbs):
             The path to the TFLite model
     """
     def __init__(self, model_path):
-        super().__init__()
         logging.info(f"{BLUE}Initializing TFLite model...{END_COLOR}")
         self.interpreter = tf.lite.Interpreter(model_path=model_path)
         self.model_path = model_path
         self.interpreter.allocate_tensors()
-        # Load metadata
         self.__load_metadata()
+        super().__init__(model_path)
 
     def predict(self, img, iou_threshold, conf_threshold):
         # Run inference for each image in the directory
@@ -79,8 +77,7 @@ class TFLiteModel(InferenceModelAbs):
         metadata_displayer = _metadata.MetadataDisplayer.with_model_file(self.model_path)
         associated_files = metadata_displayer.get_packed_associated_file_list()
         if 'temp_meta.txt' in associated_files:
-            metadata = \
-                ast.literal_eval(metadata_displayer.get_associated_file_buffer('temp_meta.txt').decode('utf-8'))
+            metadata = metadata_displayer.get_associated_file_buffer('temp_meta.txt').decode('utf-8').split(',')
         else:
             raise ValueError("The model does not contain the metadata: temp_meta.txt.")
 

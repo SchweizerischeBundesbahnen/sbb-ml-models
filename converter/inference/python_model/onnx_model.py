@@ -1,19 +1,17 @@
 import logging
-import ast
 import numpy as np
 import onnx
 import onnxruntime
 import torch
 
-from helpers.constants import BATCH_SIZE, FLOAT16, IMAGE_NAME, SCORES_NAME, CLASSES_NAME, BLUE, END_COLOR, \
-    BOUNDINGBOX_NAME, PREDICTIONS_NAME, DEFAULT_MAX_NUMBER_DETECTION, DEFAULT_INPUT_RESOLUTION, SEGMENTATION
-from tf_model.tf_nms import NMS
-from python_model.inference_model_abs import InferenceModelAbs
+from helpers.constants import BATCH_SIZE, FLOAT16, IMAGE_NAME, BLUE, END_COLOR, \
+    DEFAULT_INPUT_RESOLUTION, SEGMENTATION
+from python_model.inference_model import InferenceModel
 from pytorch_utils.pytorch_nms import YoloNMS
 from helpers.coordinates import pt_yxyx2xyxy_yolo
 from utils.segment.general import process_mask
 
-class ONNXModel(InferenceModelAbs):
+class ONNXModel(InferenceModel):
     """ Class to load a ONNX model and run inference
 
         Attributes
@@ -25,9 +23,8 @@ class ONNXModel(InferenceModelAbs):
         logging.info(f"{BLUE}Initializing ONNX model...{END_COLOR}")
         self.model = onnx.load(model_path)
         self.session = onnxruntime.InferenceSession(model_path)
-
-        # Load metadata
         self.__load_metadata()
+        super().__init__(model_path)
 
     def predict(self, img, iou_threshold, conf_threshold):
         if self.quantization_type == FLOAT16:
@@ -37,6 +34,9 @@ class ONNXModel(InferenceModelAbs):
             outputs = self.session.run(None, {IMAGE_NAME: np.array(img)})
             predictions = torch.from_numpy(outputs[0])
 
+            if self.quantization_type == FLOAT16:
+                predictions = predictions.type(torch.FloatTensor)
+
             nms = YoloNMS(None, iou_thres=iou_threshold, conf_thres=conf_threshold, class_labels=self.labels)
             yxyx, classes, scores, masks = nms.nms_yolov5(predictions, self.model_orig)
             nb_detected = classes.shape[1]
@@ -44,6 +44,11 @@ class ONNXModel(InferenceModelAbs):
             if self.model_type == SEGMENTATION:
                 protos = torch.from_numpy(outputs[1])
                 xyxy = pt_yxyx2xyxy_yolo(yxyx[0][:nb_detected])
+
+                if self.quantization_type == FLOAT16:
+                    protos = protos.type(torch.FloatTensor)
+                    xyxy = xyxy.type(torch.FloatTensor)
+
                 masks = process_mask(protos[0], masks[0], xyxy, self.img_size, upsample=True)  # HWC
             else:
                 masks = None
@@ -62,6 +67,12 @@ class ONNXModel(InferenceModelAbs):
                 masks = torch.from_numpy(outputs[3])
                 protos = torch.from_numpy(outputs[4])
                 xyxy = pt_yxyx2xyxy_yolo(yxyx[0][:nb_detected])
+
+                if self.quantization_type == FLOAT16:
+                    masks = masks.type(torch.FloatTensor)
+                    protos = protos.type(torch.FloatTensor)
+                    xyxy = xyxy.type(torch.FloatTensor)
+
                 masks = process_mask(protos[0], masks[0], xyxy, self.img_size, upsample=True)  # HWC
             else:
                 masks = None
@@ -80,9 +91,10 @@ class ONNXModel(InferenceModelAbs):
         self.output_dict = {x.name : [d.dim_value for d in x.type.tensor_type.shape.dim] for x in self.model.graph.output}
 
         metadata = self.model.metadata_props
+
         for m in metadata:
             if m.key == 'names':
-                self.labels = ast.literal_eval(m.value)
+                self.labels = m.value.split(',')
             if m.key == 'quantization_type':
                 self.quantization_type = m.value
             if m.key == 'normalized':

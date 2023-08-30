@@ -24,9 +24,9 @@ import argparse
 
 from helpers.constants import DEFAULT_INPUT_RESOLUTION, \
     DEFAULT_QUANTIZATION_TYPE, DEFAULT_MAX_NUMBER_DETECTION
+from helpers.parameters import ModelParameters, ConversionParameters
 
-from tf_converter.pytorch_to_tf_converter import PytorchToTFConverter
-from tf_utils.parameters import ModelParameters, ConversionParameters
+from tf_converter.pytorch_to_tflite_converter import PytorchToTFLiteConverter
 
 
 def main():
@@ -44,7 +44,8 @@ def main():
     parser.add_argument('--no-nms', action='store_true', help='If set, NMS is not added at the end of the model.')
     parser.add_argument('--no-normalization', action='store_true',
                         help='If set, normalization is not added at the beginning of the model.')
-    parser.add_argument('--overwrite', action='store_true', help='If set, overwrites already converted model if it exists.')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='If set, overwrites already converted model if it exists.')
 
     opt = parser.parse_args()
 
@@ -53,10 +54,10 @@ def main():
 
     conversion_parameters = ConversionParameters(quantization_types=opt.quantization_types)
 
-    converter = PytorchToTFConverter(model_input_path=opt.model_input_path,
-                                     model_parameters=model_parameters,
-                                     conversion_parameters=conversion_parameters,
-                                     overwrite=opt.overwrite)
+    converter = PytorchToTFLiteConverter(model_input_path=opt.model_input_path,
+                                         model_parameters=model_parameters,
+                                         conversion_parameters=conversion_parameters,
+                                         overwrite=opt.overwrite)
 
     converter.convert()
 

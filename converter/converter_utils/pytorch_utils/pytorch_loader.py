@@ -4,10 +4,10 @@ from pathlib import Path
 import torch
 from helpers.constants import BATCH_SIZE, NB_CHANNEL, SEGMENTATION, DETECTION, YOLOv5, \
     ULTRALYTICS
+from helpers.parameters import ModelParameters
 from models.experimental import Ensemble
 from models.yolo import Detect as YoloDetect
 from models.yolo import Segment as YoloSegment
-from tf_utils.parameters import ModelParameters
 from torch import nn
 from ultralytics.nn.modules.head import Detect as UltralyticsDetect
 from ultralytics.nn.modules.head import Segment as UltralyticsSegment
@@ -52,10 +52,11 @@ class PyTorchModelLoader:
         except:
             self.torch_model = self.attempt_load(self.model_input_path)
         if isinstance(self.torch_model.names, list):
-            self.torch_model.names = {i: name.encode().decode('ascii', 'ignore') for i, name in enumerate(self.torch_model.names)}
+            self.torch_model.names = [name.encode().decode('ascii', 'ignore') for i, name in
+                                      enumerate(self.torch_model.names)]
         else:
-            self.torch_model.names = {i: name.encode().decode('ascii', 'ignore') for i, name in
-                                      enumerate(self.torch_model.names.values())}
+            self.torch_model.names = [name.encode().decode('ascii', 'ignore') for i, name in
+                                      enumerate(self.torch_model.names.values())]
 
     def __dry_run(self):
         self.torch_model.eval()  # Will return predictions, model outputs
@@ -92,7 +93,7 @@ class PyTorchModelLoader:
             'stride': int(max(self.torch_model.stride)),
             'task': self.model_parameters.model_type,
             'imgsz': self.model_parameters.input_resolution,
-            'names': self.torch_model.names,
+            'names': ','.join(self.torch_model.names),
             'normalized': self.model_parameters.include_normalization,
             'max_det': self.model_parameters.max_det,
             'nms': self.model_parameters.include_nms
