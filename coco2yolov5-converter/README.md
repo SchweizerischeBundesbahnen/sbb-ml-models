@@ -2,7 +2,7 @@
 This code is used to convert a dataset in [COCO format](https://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch#:~:text=The%20COCO%20dataset%20is%20formatted,%E2%80%9D%20(in%20one%20case).) to a dataset in [Yolo format](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data) which can be used to train a YoloV5 model.
 
 ## Setup
-Install the dependencies with pipenv: `pipenv install` and activate the environment: `pipenv shell`.
+Python 3.8 is used. Install the dependencies with pip: `pip3 install -r requirements.txt`
 
 ## Usage
 Use:
