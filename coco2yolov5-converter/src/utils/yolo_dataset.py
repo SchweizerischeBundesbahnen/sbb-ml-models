@@ -45,42 +45,40 @@ class YoloDataset:
             str(self.image_train), str(self.image_val), labels,
             self.path / config_file, new_format)
 
-    def create(self, coco, images_basedir, labels):
+    def create(self, coco, images_basedir, valid_labels, labels_to_fusion):
         nb_train = 0
         nb_val = 0
+        nb_ignored = 0
         # Consider all images
         for image_id in coco.imgs:
             file_name = coco.imgs[image_id]["file_name"]
             aids = coco.index.gid_to_aids[image_id]
             image_path = images_basedir / file_name
-
-            images_out_folder, labels_out_folder, nb_train, nb_val = self.__get_out_folders(nb_train, nb_val)
-
-            self.__copy_image(file_name, image_path, images_out_folder)
-
             # Get the labels
             yolo_labels = []
             for aid in aids:
                 coco_category_id = coco.anns[aid]["category_id"]
                 annotation_name = coco.cats[coco_category_id]["name"]
-
-                # TODO: Add param
-                # if annotation_name not in valid_tag_names:
-                #    print(f"skip {annotation_name}")
-                #    continue
-
                 if 'segmentation' in coco.anns[aid].keys():
                     # Masks for segmentation
-                    self.__convert_coco_for_segmentation(coco, aid, annotation_name, yolo_labels, labels)
+                    self.__convert_coco_for_segmentation(coco, aid, annotation_name, yolo_labels, valid_labels, labels_to_fusion)
                 else:
                     # Bboxes for detection
-                    self.__convert_coco_for_detection(coco, aid, annotation_name, image_id, yolo_labels, labels)
+                    self.__convert_coco_for_detection(coco, aid, annotation_name, image_id, yolo_labels, valid_labels, labels_to_fusion)
 
-            self.__write_label(file_name, labels_out_folder, yolo_labels)
+            if len(yolo_labels) != 0:
+                images_out_folder, labels_out_folder, nb_train, nb_val = self.__get_out_folders(nb_train, nb_val)
+                self.__copy_image(file_name, image_path, images_out_folder)
+                self.__write_label(file_name, labels_out_folder, yolo_labels)
+            else:
+                nb_ignored += 1
+                print(f"{file_name} has no annotations.")
+
         logging.info(f"- {nb_train} images are copied into train")
         logging.info(f"- {nb_val} images are copied into val")
+        logging.info(f"- {nb_ignored} images are ignored")
 
-    def __convert_coco_for_detection(self, coco, aid, annotation_name, image_id, yolo_labels, labels):
+    def __convert_coco_for_detection(self, coco, aid, annotation_name, image_id, yolo_labels, valid_labels, labels_to_fusion):
         img_width = coco.imgs[image_id].get("width", 0)  # optional
         img_height = coco.imgs[image_id].get("height", 0)  # optional
         x, y, w, h = coco.anns[aid]["bbox"]
@@ -92,10 +90,16 @@ class YoloDataset:
         annotation_index = labels.index(annotation_name)
         yolo_labels.append([annotation_index, x_yolo, y_yolo, w_yolo, h_yolo])
 
-    def __convert_coco_for_segmentation(self, coco, aid, annotation_name, yolo_labels, labels):
+    def __convert_coco_for_segmentation(self, coco, aid, annotation_name, yolo_labels, valid_labels, labels_to_fusion):
         masks = coco.anns[aid]["segmentation"]
-        annotation_index = labels.index(annotation_name)
-        yolo_labels.append([x for x in [annotation_index] + masks[0]])
+        label = None
+        if annotation_name in labels_to_fusion.keys():
+            label = labels_to_fusion[annotation_name]
+        elif annotation_name in valid_labels:
+            label = annotation_name
+        if label:
+            annotation_index = valid_labels.index(label)
+            yolo_labels.append([x for x in [annotation_index] + masks[0]])
 
     def __copy_image(self, file_name, image_path, images_out_folder):
         # TODO: use symlink instead?
@@ -107,14 +111,10 @@ class YoloDataset:
             exit(1)
 
     def __write_label(self, file_name, labels_out_folder, yolo_labels):
-        if len(yolo_labels) == 0:
-            print(
-                f"{file_name} has no annotations in {annotations_file}")
-        else:
-            txt_file_name = Path(file_name).with_suffix(".txt")
-            os.makedirs(os.path.dirname(labels_out_folder / txt_file_name), exist_ok=True)
-            TxtUtil.write_labels_txt_file(
-                yolo_labels, labels_out_folder / txt_file_name)
+        txt_file_name = Path(file_name).with_suffix(".txt")
+        os.makedirs(os.path.dirname(labels_out_folder / txt_file_name), exist_ok=True)
+        TxtUtil.write_labels_txt_file(
+            yolo_labels, labels_out_folder / txt_file_name)
 
     def __get_out_folders(self, nb_train, nb_val):
         # Determine whether to add it to train or val

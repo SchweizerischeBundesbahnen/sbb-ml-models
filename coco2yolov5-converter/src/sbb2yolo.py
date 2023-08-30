@@ -17,9 +17,6 @@ from utils.yolo_dataset import YoloDataset
 from utils.coco_datasets import CocoDatasets
 
 
-# TODO: Add param
-# valid_tag_names = ["Abfahrtsmonitor","Abfallbehälter-Abteil","Abfallbehälter-Abteil_fehlt","Abfallbehälter-Bahnhof","Abfallbehälter-Vorraum","Abfallbehälter_Graffiti","Abfalleimer-Bahnhof","Abfalleimer-Bahnhof_Graffiti","Abteil-Übergangstüre","Abteilwand_Graffiti","Analoge-Schliessfächer","Analoge-Schliessfächer_Verkratzt","Anderes-Piktogramm-Bahnhof","Ankunftsmonitor","Armlehne","Auto","Automatennummer","Bedien-und-Anzeigeelemente","Beleuchtung im Fst.","Beleuchtung-Bahnhof_AUS-defekt","Beleuchtung-Bahnhof_EIN","Beleuchtung-Wagen_AUS-defekt","Beleuchtung-Wagen_EIN","Betriebslagemonitor","Billettautomat-SBB","Billettautomat-SBB_Bildschirm-eingeschlagen","Billettautomat-SBB_Graffiti","Billettentwerter-SBB","Billettentwerter_Graffiti","Blaue-FIS-Tafel","Busnummer","CAB-Radio und Funkgerät","Dienstbeleuchtung-Schienenfz","Digitale-Schliessfächer","DMI_Bedien_Diagnosebildschirm","Einstiegsbereich-Wand_Graffiti","Einstiegstüre","Einstiegstüre_offen","ETCS","Fenster-innen-Wagen","Fenster-innen-Wagen_Graffiti","Feuerlöscher","FIS_Graffiti","Fluchthaube","Formulare","Fussboden-Bahnhof_beschädigt","Fussboden-Bahnhof_verschmutzt","Fussboden-Wagen_Verschmutzt","Fusspodest-Pedal","Füllstandsanz-Bioreaktor-Fäkalientank","Füllstandsanz-Wasser","Gebäudetüre","Gebäudetüre_Graffiti","Geldeinwurf","Generalanzeiger","Gleis-Piktogramm-Tafel","Handlauf-Bahnhof","Inventar Fzg.","Kamera-Wagen","KIS oder TIMS","KIS-Anzeige-aussen","KIS-Anzeige-innen","Klima und Heizung","Kupplung","Lautsprecher Fst.","Lautsprecher-Bahnhof","LEA-Halter und USB","Lift","Monitor-Wagen","Motorrad","Nothammer","Nothammer_fehlt","Pantograf","Parkautomat","Perronanzeiger","Perronsäule_Graffiti","Person","Pflanzenwuchs","Puffer-Stossvorrichtung","Quittierschalter","Re 460","Recyclingstation","Rolltreppe","Rollvorhang","Rückspiegel-und-Rücksehsysteme","Sander","SBB-Uhr","Scheibenwisch-und-Waschanlage","Schienenfz","Schienenfz_Graffiti","Schienenfz_Verschmutzung","Schlauch-Kupplung","Schnee","Seitenfenster Fst.","Sektor-Piktogramm-Tafel","Selecta-Kaffeeautomat","Selectaautomat","Selectaautomat_eingeschlagen","Sitz Lokführer","Sitz-Wagen","Sitz-Wagen_Kopfschutztuch-fehlt","Sitz-Wagen_Polster-aufgerissen","Sitz-Wagen_Polster-fehlt","Sitz-Wagen_Polster-verschmutzt","Sitzbank-Bahnhof","Sitzbank-Bahnhof_Graffiti","Sitzbank-Bahnhof_Verschmutzt","Sitzverstellung-Wagen","Sonnenschutz-Führerstand","Sonstige-Wagen-Graffitis","Sprechstelle-Zugpersonal","Steckdose-Wagen","Sticker","Text-auf-FIS-Tafel","Tisch-Wagen","Tisch-Wagen_Graffiti","Tisch-Wagen_Verschmutzt","Tor","Treppe-Bahnhof","Treppe-Bahnhof_Verschmutzt","Türe-Führerstand","Türgriff_Einstieg","Türknopf_Einstieg_schliessen","Türknopf_Einstieg_öffnen","UIC-Nummer","Umgebung_Graffiti","Unter-Überführung-Rampe_Graffiti","Velo","Wartesaal-Türe","WC-Bahnhof_Graffiti","WC-Kabine-Abfallbehälter","WC-Kabine-Defekt-Kleber","WC-Kabine-Oberfläche-Waschbereich-verkratzt","WC-Kabine-Seifenspender","WC-Kabine-Spiegel_Graffiti","WC-Kabine-Toilette","WC-Kabine-Türe","WC-Kabine-Türklinke-Griff","WC-Kabine-Türknopf","WC-Kabine-Wand_Graffiti","WC-Kabine-Waschbecken","WC-Kabine-Wasserhahn","WC-Türe-Bahnhof","ZUB"]
-
 class Coco2YoloDatasetConverter:
     def __init__(self, coco_input_folders: list, yolo_output_folder: str, yolo_config_file: str,
                  dataset_split_pivot: float, new_format: bool = True, overwrite: bool = False):
@@ -36,24 +33,21 @@ class Coco2YoloDatasetConverter:
         yolo_dataset = YoloDataset(self.yolo_output_folder, self.overwrite, self.dataset_split_pivot)
         logging.info("\033[36mStarting conversion from Coco to Yolo format...\033[0m")
 
-        labels, cocos, image_folders = CocoDatasets(self.coco_input_folders).read_datasets()
-
-        # TODO: Add param
-        # annotation_names_all = [a for a in annotation_names_all if a in valid_tag_names]
+        valid_labels, labels_to_fusion, cocos, image_folders = CocoDatasets(self.coco_input_folders).read_datasets()
 
         # Convert all input coco datasets
         for i, (coco, images_basedir) in enumerate(zip(cocos, image_folders)):
             logging.info(f"Converting dataset ({i + 1}/{len(self.coco_input_folders)})")
-            yolo_dataset.create(coco, images_basedir, labels)
+            yolo_dataset.create(coco, images_basedir, valid_labels, labels_to_fusion)
 
         # Write yaml config file
-        yolo_dataset.writeYaml(labels, self.yolo_config_file, self.new_format)
+        yolo_dataset.writeYaml(valid_labels, self.yolo_config_file, self.new_format)
 
         logging.info(f"\033[32mConversion success\033[0m: saved in {self.yolo_output_folder}")
 
         logging.info(
             f"- The dataset contains {len(list(Path(yolo_dataset.image_train).glob('**/*')))} images in train and {len(list(Path(yolo_dataset.image_val).glob('**/*')))} images in val")
-        logging.info(f"- There are {len(labels)} labels")
+        logging.info(f"- There are {len(valid_labels)} labels")
 
 
 def create_parser():

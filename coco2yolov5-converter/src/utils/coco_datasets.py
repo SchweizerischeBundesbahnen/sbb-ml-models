@@ -7,6 +7,7 @@ import shutil
 import sys
 from pathlib import Path
 from random import random
+import yaml
 
 class CocoDatasets:
     def __init__(self, root_folders):
@@ -23,7 +24,7 @@ class CocoDatasets:
                 f"Reading from dataset: {root_folder.rstrip('/')} ({i + 1}/{len(self.root_folders)})")
             self.__init_dataset(root_folder)
 
-        return list(dict.fromkeys(self.labels)), self.cocos, self.image_folders
+        return self.valid_labels, self.labels_to_fusion, self.cocos, self.image_folders
 
     def __init_dataset(self, root_folder):
         input_path = Path(root_folder)
@@ -43,4 +44,25 @@ class CocoDatasets:
         self.image_folders.append(Path(annotations_file).parents[0])
         self.labels.extend(annotation_names)
         logging.info(f"- There are {len(coco.imgs)} images")
-        logging.info(f"- There are {len(annotation_names)} labels")
+        logging.info(f"- There are {len(annotation_names)} labels in the dataset")
+
+        self.valid_labels = list(dict.fromkeys(self.labels))
+        self.labels_to_fusion = {}
+
+        labels_fusion_files = list(input_path.glob('**/*.yaml'))
+        if len(labels_fusion_files) != 0:
+            logging.info(f"- Checking the labels...")
+            labels_fusion_file = labels_fusion_files[0]
+            with open(labels_fusion_file, 'r') as file:
+                labels_fusion = yaml.safe_load(file)
+            self.valid_labels = labels_fusion['valid']
+            logging.info(f"- {len(self.valid_labels)} valid labels: {self.valid_labels}")
+            if 'fusion' in labels_fusion.keys():
+                for k, v in labels_fusion['fusion'].items():
+                    logging.info(f"- New label: {k}, composed of {v}")
+                    if k not in self.valid_labels:
+                        self.valid_labels.append(k)
+                    for c in v:
+                        self.labels_to_fusion[c] = k
+            logging.info(f"- {len(self.valid_labels)} labels are considered.")
+
