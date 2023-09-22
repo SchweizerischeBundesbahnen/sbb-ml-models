@@ -87,8 +87,14 @@ class YoloDataset:
         else:
             (x_yolo, y_yolo, w_yolo, h_yolo) = convertAbsCoco2Yolo(
                 x, y, w, h, img_width, img_height)
-        annotation_index = labels.index(annotation_name)
-        yolo_labels.append([annotation_index, x_yolo, y_yolo, w_yolo, h_yolo])
+        abel = None
+        if annotation_name in labels_to_fusion.keys():
+            label = labels_to_fusion[annotation_name]
+        elif annotation_name in valid_labels:
+            label = annotation_name
+        if label:
+            annotation_index = valid_labels.index(label)
+            yolo_labels.append([annotation_index, x_yolo, y_yolo, w_yolo, h_yolo])
 
     def __convert_coco_for_segmentation(self, coco, aid, annotation_name, yolo_labels, valid_labels, labels_to_fusion):
         masks = coco.anns[aid]["segmentation"]
