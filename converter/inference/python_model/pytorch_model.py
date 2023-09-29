@@ -38,7 +38,7 @@ class PyTorchModel(InferenceModel):
 
         xyxy = pt_yxyx2xyxy_yolo(yxyx[0][:nb_detected])
 
-        if masks.shape[2] != 0:
+        if masks.shape[1] != 0:
             masks = process_mask(protos[0], masks[0], xyxy, self.img_size, upsample=True)  # HWC
         else:
             masks = None

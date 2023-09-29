@@ -6,9 +6,6 @@ import random
 
 WHITE_COLOR = (225, 255, 255)
 
-red_classes = [0]
-orange_classes = [2, 15, 16]
-
 def get_red():
     redval = random.randint(180, 255)
     greenval = random.randint(0, 100)
@@ -27,7 +24,8 @@ def get_green():
     blueval = random.randint(redval - 20, redval + 20)
     return (redval, greenval, blueval)
 
-DATASET_COLORS = [get_red() if i in red_classes else get_orange() if i in orange_classes else get_green() for i in range(31)]
+DATASET_COLORS_31 = [get_red() if i in [0] else get_orange() if i in [2, 15, 16] else get_green() for i in range(31)]
+DATASET_COLORS_10 = [get_red() if i in [0] else get_green() for i in range(10)]
 
 
 def plot_boxes(img_size, img_origs, yxyxs, classes, scores, nb_detecteds, labels):
@@ -69,7 +67,9 @@ def plot_masks(img_size, img_origs, yxyxs, classes, scores, masks, nb_detecteds,
     annotator = Annotator(img_orig, line_width=line_thickness, example=str(classes))
 
     if len(labels) == 31:
-        masks_colors = [DATASET_COLORS[int(i)] for i in classe]
+        masks_colors = [DATASET_COLORS_31[int(i)] for i in classe]
+    elif len(labels) == 10:
+        masks_colors = [DATASET_COLORS_10[int(i)] for i in classe]
     else:
         masks_colors = [colors(int(classe[i])) for i in range(len(classe))]
 
