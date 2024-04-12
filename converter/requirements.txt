@@ -13,7 +13,7 @@ cycler==0.11.0
 decorator==5.1.1
 executing==1.2.0
 flatbuffers==22.11.23
-fonttools==4.38.0
+fonttools==4.43.0
 gast==0.4.0
 google-auth==2.14.1
 google-auth-oauthlib==0.4.6
