@@ -74,7 +74,7 @@ termcolor==2.1.1
 tflite-support-nightly==0.4.4.dev20221103
 torch==1.13.1
 torchvision==0.14.0
-tqdm==4.64.1
+tqdm==4.66.3
 traitlets==5.8.1
 typing_extensions==4.4.0
 urllib3==1.26.13
