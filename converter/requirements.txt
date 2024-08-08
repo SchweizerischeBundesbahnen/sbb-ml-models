@@ -24,7 +24,7 @@ idna==3.7
 importlib-metadata==5.0.0
 ipython==8.10.0
 jedi==0.18.2
-keras==2.11.0
+keras==2.13.1
 kiwisolver==1.4.4
 libclang==14.0.6
 Markdown==3.4.1
